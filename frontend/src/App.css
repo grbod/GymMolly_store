@@ -1,0 +1,400 @@
+body {
+  background-color: #f5f5f7;
+  color: #1d1d1f;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
+.App {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+h1 {
+  text-align: left;
+  font-weight: 600;
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: #1d1d1f;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #86868b;
+  margin-bottom: 6px;
+  display: block;
+}
+
+input[type="text"], input[type="number"], input[type="file"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d2d2d7;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+}
+
+input[type="text"]:focus, input[type="number"]:focus {
+  outline: none;
+  border-color: #0071e3;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #d2d2d7;
+}
+
+th {
+  font-weight: 600;
+  color: #1d1d1f;
+  background-color: #f5f5f7;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+input[type="number"] {
+  width: 60px;
+  text-align: center;
+}
+
+button[type="submit"] {
+  padding: 12px 24px;
+  background-color: #b2cfec;
+  color: #11003f;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+button[type="submit"]:hover {
+  background-color: #0077ed;
+}
+
+input[type="file"] {
+  border: none;
+  padding: 0;
+}
+
+input[type="file"]::file-selector-button {
+  padding: 8px 16px;
+  background-color: #f5f5f7;
+  border: none;
+  border-radius: 6px;
+  color: #0071e3;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: #e8e8ed;
+}
+
+.form-container {
+  background-color: #ffffff;
+  border-radius: 18px;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.add-address-link {
+  margin-top: 12px;
+  margin-bottom: 24px;
+}
+
+.add-address-link a {
+  color: #0071e3;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.add-address-link a:hover {
+  text-decoration: underline;
+}
+
+.address-display {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.address-display p {
+  margin: 5px 0;
+}
+
+.edit-button, .delete-button {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.edit-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.edit-button:hover {
+  background-color: #45a049;
+}
+
+.delete-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.delete-button:hover {
+  background-color: #da190b;
+}
+
+.validation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.95);
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.app-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+nav {
+  padding: 20px 0;
+  margin-bottom: 20px;
+}
+
+nav a {
+  color: #0071e3;
+  text-decoration: none;
+  margin: 0 10px;
+  padding: 5px 10px;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.inventory-table th,
+.inventory-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.inventory-table th {
+  background-color: #f4f4f4;
+}
+
+.inventory-table input[type="number"] {
+  width: 60px;
+  padding: 4px;
+}
+
+.view-orders-button {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.history-button {
+  padding: 12px 24px;
+  background-color: #f5f5f7;
+  color: #1d1d1f;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.history-button:hover {
+  background-color: #e5e5e7;
+}
+
+select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d2d2d7;
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: white;
+  cursor: pointer;
+  appearance: none; /* Removes default browser styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+select:focus {
+  outline: none;
+  border-color: #0071e3;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+}
+
+select:hover {
+  border-color: #b1b1b6;
+}
+
+/* Style for the select container */
+.select-container {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+/* Keep custom animations and specific styles */
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Custom styles that Bootstrap doesn't cover */
+.validation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.95);
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* Custom button colors if needed */
+.btn-custom {
+  background-color: #b2cfec;
+  color: #11003f;
+}
+
+.btn-custom:hover {
+  background-color: #0077ed;
+  color: #ffffff;
+}
+
+.modal-90w {
+  max-width: 90%;
+  width: fit-content;
+}
+
+.modal-dialog-centered {
+  display: flex;
+  align-items: center;
+  min-height: calc(100% - 1rem);
+}
+
+/* Add this to your existing styles */
+.add-address-button {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.2rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.add-address-button:hover {
+  background-color: #0056b3;
+  color: #ffffff;
+}
+
+.add-address-button i {
+  font-size: 1rem;
+  margin-right: 0.25rem;
+}

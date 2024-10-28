@@ -1,0 +1,97 @@
+.validation-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.validation-container h2 {
+  color: #1d1d1f;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.validation-container section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f5f5f7;
+  border-radius: 8px;
+}
+
+.validation-container p {
+  margin: 8px 0;
+  color: #424245;
+}
+
+.validation-container table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 12px 0;
+}
+
+.validation-container th,
+.validation-container td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #d2d2d7;
+}
+
+.button-group {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.confirm-button {
+  background-color: #b2cfec;
+  color: #11003f;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background-color: #f5f5f7;
+  color: #1d1d1f;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.button-group button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.validation-container h3 {
+  color: #1d1d1f;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+.error-message {
+  color: #dc3545;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.loading-cursor {
+  cursor: wait;
+}
+
+/* Add this to your existing CSS */
+.loading-cursor,
+.loading-cursor button {
+  cursor: wait !important;
+}
+
+/* Override any hover states */
+.loading-cursor button:hover {
+  cursor: wait !important;
+}
