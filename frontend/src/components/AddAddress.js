@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AddAddress.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function AddAddress({ onAddressAdded }) {
   const [formData, setFormData] = useState({
     nickname: '',
@@ -38,7 +40,7 @@ function AddAddress({ onAddressAdded }) {
   const handleConfirmedSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const response = await fetch('http://localhost:5000/api/shipping-addresses', {
+      const response = await fetch(`${API_URL}/api/shipping-addresses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

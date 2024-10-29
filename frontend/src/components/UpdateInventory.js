@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './UpdateInventory.css';  // Create this file if it doesn't exist
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function UpdateInventory({ onInventoryUpdated }) {
     const [inventory, setInventory] = useState([]);
     const [pendingChanges, setPendingChanges] = useState({});
@@ -15,7 +17,7 @@ function UpdateInventory({ onInventoryUpdated }) {
 
     const fetchInventory = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/inventory');
+            const response = await fetch(`${API_URL}/api/inventory`);
             const data = await response.json();
             setInventory(data);
             setLoading(false);
@@ -36,7 +38,7 @@ function UpdateInventory({ onInventoryUpdated }) {
     const submitChanges = async () => {
         try {
             const updatePromises = Object.entries(pendingChanges).map(([sku, quantity]) => 
-                fetch(`http://localhost:5000/api/inventory/${sku}`, {
+                fetch(`${API_URL}/api/inventory/${sku}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',

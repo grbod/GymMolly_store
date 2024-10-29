@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './OrderValidation.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
   const navigate = useNavigate();
   const [existingPOs, setExistingPOs] = useState([]);
@@ -15,7 +17,7 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
 
   const fetchExistingPOs = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/orders');
+      const response = await fetch(`${API_URL}/api/orders`);
       if (!response.ok) {
         throw new Error('Failed to fetch existing orders');
       }
@@ -68,7 +70,7 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
         formData.append('attachment', orderData.attachment);
       }
 
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         body: formData
       });

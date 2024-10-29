@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './ViewOrders.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function ViewOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +14,7 @@ function ViewOrders() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/orders');
+      const response = await fetch(`${API_URL}/api/orders`);
       if (!response.ok) {
         const errorData = await response.text();
         throw new Error(`Failed to fetch orders: ${response.status} ${response.statusText}. ${errorData}`);

@@ -10,6 +10,8 @@ import UpdateInventory from './components/UpdateInventory';
 import OrderValidation from './components/OrderValidation';
 import ViewOrders from './components/ViewOrders';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function App() {
   const [formData, setFormData] = useState({
     po: '',
@@ -33,7 +35,7 @@ function App() {
 
   const fetchAddresses = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/shipping-addresses');
+      const response = await fetch(`${API_URL}/api/shipping-addresses`);
       const data = await response.json();
       setAddresses(data);
     } catch (err) {
@@ -44,7 +46,7 @@ function App() {
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/inventory');
+      const response = await fetch(`${API_URL}/api/inventory`);
       const data = await response.json();
       setInventory(data);
       setFormData(prevState => ({
@@ -122,7 +124,7 @@ function App() {
     if (!formData.address) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/shipping-addresses/${formData.address.id}`, {
+      const response = await fetch(`${API_URL}/api/shipping-addresses/${formData.address.id}`, {
         method: 'DELETE',
       });
 

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import './AddAddress.css';  // Reuse the same CSS
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function UpdateAddress({ onAddressUpdated }) {
   const [formData, setFormData] = useState({
     nickname: '',
@@ -25,7 +27,7 @@ function UpdateAddress({ onAddressUpdated }) {
     // Fetch the existing address data
     const fetchAddress = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/shipping-addresses/${id}`);
+        const response = await fetch(`${API_URL}/api/shipping-addresses/${id}`);
         if (!response.ok) {
           throw new Error('Address not found');
         }
@@ -58,7 +60,7 @@ function UpdateAddress({ onAddressUpdated }) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/shipping-addresses/${id}`, {
+      const response = await fetch(`${API_URL}/api/shipping-addresses/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
