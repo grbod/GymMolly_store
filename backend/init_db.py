@@ -39,14 +39,14 @@ def add_sample_data():
 
     # Sample shipping details
     shipping_details = [
-        {'sku': 'GMPROCHOC2-cs', 'length': 16, 'width': 12, 'height': 12, 'weight': 16},
-        {'sku': 'GMPROCINN2-cs', 'length': 16, 'width': 12, 'height': 12, 'weight': 16},
-        {'sku': 'GMPROCNC2-cs', 'length': 16, 'width': 12, 'height': 12, 'weight': 16},
-        {'sku': 'GYMBCAABR30-cs', 'length': 6, 'width': 6, 'height': 6, 'weight': 8},
-        {'sku': 'GYMBCAAKW30-cs', 'length': 6, 'width': 6, 'height': 6, 'weight': 8},
-        {'sku': 'GYMOLBLURAZ30-cs', 'length': 8, 'width': 16, 'height': 12, 'weight': 10},
-        {'sku': 'GYMOLKSBRW30-cs', 'length': 8, 'width': 16, 'height': 12, 'weight': 10},
-        {'sku': 'GYMOLCREA57-cs', 'length': 4, 'width': 4, 'height': 4, 'weight': 5},
+        {'sku': 'GMPROCHOC2-cs', 'length': 17.375, 'width': 11.75, 'height': 10.25, 'weight': 15.2},
+        {'sku': 'GMPROCINN2-cs', 'length': 17.375, 'width': 11.75, 'height': 10.25, 'weight': 15.2},
+        {'sku': 'GMPROCNC2-cs', 'length': 17.375, 'width': 11.75, 'height': 10.25, 'weight': 15.2},
+        {'sku': 'GYMBCAABR30-cs', 'length': 11.25, 'width': 7.75, 'height': 6.25, 'weight': 6.2},
+        {'sku': 'GYMBCAAKW30-cs', 'length': 11.25, 'width': 7.75, 'height': 6.25, 'weight': 6.2},
+        {'sku': 'GYMOLBLURAZ30-cs', 'length': 20.25, 'width': 15.25, 'height': 7, 'weight': 19.3},
+        {'sku': 'GYMOLKSBRW30-cs', 'length': 20.25, 'width': 15.25, 'height': 7, 'weight': 18.7},
+        {'sku': 'GYMOLCREA57-cs', 'length': 12.25, 'width': 9.5, 'height': 7.5, 'weight': 5.6},
     ]
 
     # Updated sample shipping addresses

@@ -9,7 +9,7 @@ from shipstationcreate import create_shipstation_order
 
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:3000"],
+        "origins": ["http://localhost:3000", "https://gymmolly-store.onrender.com"],
         "methods": ["GET", "POST", "PUT", "DELETE"],
         "allow_headers": ["Content-Type"]
     }
