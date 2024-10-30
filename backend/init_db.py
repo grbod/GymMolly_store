@@ -1,11 +1,11 @@
-from main import app, db, ItemDetail, InventoryQuantity, ShippingDetail, ShippingAddress
+from main import app, db, ItemDetail, InventoryQuantity, ShippingDetail, ShippingAddress, Order, OrderItem
+from sqlalchemy import text
+from datetime import datetime, timedelta
 
 def clear_database():
     try:
-        db.session.query(ItemDetail).delete()
-        db.session.query(InventoryQuantity).delete()
-        db.session.query(ShippingDetail).delete()
-        db.session.query(ShippingAddress).delete()
+        # Disable foreign key checks temporarily if needed
+        db.session.execute(text('TRUNCATE TABLE shipping_address, shipping_detail, inventory_quantity, item_detail RESTART IDENTITY CASCADE'))
         db.session.commit()
         print("Cleared existing data from database")
     except Exception as e:
@@ -174,36 +174,161 @@ def add_sample_data():
         }
     ]
 
+    # Sample orders
+    sample_orders = [
+        {
+            'purchase_order_number': 'PO-2024-001',
+            'shipping_address_id': 1,  # Gym Molly HQ
+            'created_at': datetime.utcnow() - timedelta(days=5),
+            'shipping_method': 'Ground'
+        },
+        {
+            'purchase_order_number': 'PO-2024-002',
+            'shipping_address_id': 2,  # GNC Ruston
+            'created_at': datetime.utcnow() - timedelta(days=3),
+            'shipping_method': 'Express'
+        },
+        {
+            'purchase_order_number': 'PO-2024-003',
+            'shipping_address_id': 3,  # GNC Marietta
+            'created_at': datetime.utcnow() - timedelta(days=2),
+            'shipping_method': 'Ground'
+        },
+        {
+            'purchase_order_number': 'PO-2024-004',
+            'shipping_address_id': 4,  # GNC Smyrna
+            'created_at': datetime.utcnow() - timedelta(days=1),
+            'shipping_method': 'Ground'
+        },
+        {
+            'purchase_order_number': 'PO-2024-005',
+            'shipping_address_id': 5,  # GNC Gainesville
+            'created_at': datetime.utcnow(),
+            'shipping_method': 'Express'
+        }
+    ]
+
+    # Add sample order items after the sample_orders list
+    sample_order_items = [
+        # Items for PO-2024-001
+        {
+            'order_id': 1,
+            'product_sku': 'GMPROCHOC2-cs',
+            'quantity': 2
+        },
+        {
+            'order_id': 1,
+            'product_sku': 'GMPROCINN2-cs',
+            'quantity': 1
+        },
+        
+        # Items for PO-2024-002
+        {
+            'order_id': 2,
+            'product_sku': 'GYMBCAABR30-cs',
+            'quantity': 3
+        },
+        {
+            'order_id': 2,
+            'product_sku': 'GYMOLCREA57-cs',
+            'quantity': 2
+        },
+        
+        # Items for PO-2024-003
+        {
+            'order_id': 3,
+            'product_sku': 'GMPROCNC2-cs',
+            'quantity': 1
+        },
+        {
+            'order_id': 3,
+            'product_sku': 'GYMOLBLURAZ30-cs',
+            'quantity': 2
+        },
+        
+        # Items for PO-2024-004
+        {
+            'order_id': 4,
+            'product_sku': 'GYMBCAAKW30-cs',
+            'quantity': 2
+        },
+        {
+            'order_id': 4,
+            'product_sku': 'GYMOLKSBRW30-cs',
+            'quantity': 1
+        },
+        
+        # Items for PO-2024-005
+        {
+            'order_id': 5,
+            'product_sku': 'GMPROCHOC2-cs',
+            'quantity': 3
+        },
+        {
+            'order_id': 5,
+            'product_sku': 'GYMOLCREA57-cs',
+            'quantity': 4
+        }
+    ]
+
     try:
         # Add item details
         for item in item_details:
             new_item = ItemDetail(**item)
             db.session.add(new_item)
 
+        db.session.flush()  # Flush after each related set of records
+
         # Add inventory quantities
         for quantity in inventory_quantities:
             new_quantity = InventoryQuantity(**quantity)
             db.session.add(new_quantity)
+
+        db.session.flush()
 
         # Add shipping details
         for detail in shipping_details:
             new_detail = ShippingDetail(**detail)
             db.session.add(new_detail)
 
+        db.session.flush()
+
         # Add shipping addresses
         for address in shipping_addresses:
             new_address = ShippingAddress(**address)
             db.session.add(new_address)
 
+        db.session.flush()
+
+        # Add orders
+        print("Adding sample orders...")
+        for order_data in sample_orders:
+            new_order = Order(**order_data)
+            db.session.add(new_order)
+
         db.session.commit()
-        print("Sample data added successfully")
+        print("Sample data including orders added successfully")
+
+        # After adding orders, add order items
+        print("Adding sample order items...")
+        for item_data in sample_order_items:
+            new_order_item = OrderItem(**item_data)
+            db.session.add(new_order_item)
+
+        db.session.commit()
+        print("Sample data including orders and order items added successfully")
     except Exception as e:
         print(f"Error adding sample data: {e}")
         db.session.rollback()
+        raise
 
 if __name__ == '__main__':
     with app.app_context():
-        # Drop all existing tables and create new ones
-        db.drop_all()
-        db.create_all()
-        add_sample_data()
+        try:
+            # Drop all existing tables and create new ones
+            db.drop_all()
+            db.create_all()
+            print("Database schema created successfully")
+            add_sample_data()
+        except Exception as e:
+            print(f"Error initializing database: {e}")

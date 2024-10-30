@@ -3,8 +3,10 @@ from flask_sqlalchemy import SQLAlchemy
 
 # Flask and Database Configuration
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gymmolly.db'  # This will go to /instance by default
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://gymmollydb_user:4XMPoJDqyYtotaUjlkItXaQuaeR4wV2C@dpg-csgqbdo8fa8c7391s130-a/gymmollydb'
 db = SQLAlchemy(app)
+
+
 
 # ShipStation API Configuration
 SS_CLIENT_ID = "74e67f0a1af04427826865a889eaa00e"

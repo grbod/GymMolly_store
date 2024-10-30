@@ -6,4 +6,6 @@ services:
     startCommand: gunicorn main:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12.7 
+        value: 3.12.7
+      - key: DATABASE_URL
+        value: postgresql://gymmollydb_user:4XMPoJDqyYtotaUjlkItXaQuaeR4wV2C@dpg-csgqbdo8fa8c7391s130-a/gymmollydb
