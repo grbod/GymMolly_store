@@ -24,8 +24,6 @@ function App() {
   const [error, setError] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showValidation, setShowValidation] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {

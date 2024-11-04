@@ -17,7 +17,6 @@ function UpdateAddress({ onAddressUpdated }) {
     email: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
   const [submittedAddress, setSubmittedAddress] = useState(null);
 
   const navigate = useNavigate();
@@ -48,11 +47,6 @@ function UpdateAddress({ onAddressUpdated }) {
       ...prevState,
       [name]: value
     }));
-  };
-
-  const handleInitialSubmit = (e) => {
-    e.preventDefault();
-    setShowConfirmation(true);
   };
 
   const handleSubmit = async (e) => {
@@ -101,10 +95,6 @@ function UpdateAddress({ onAddressUpdated }) {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleCancelConfirmation = () => {
-    setShowConfirmation(false);
   };
 
   const handleGoBack = () => {
