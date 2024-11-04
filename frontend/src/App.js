@@ -98,18 +98,38 @@ function App() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Check if there are any products with cases > 0
-    const hasProducts = formData.products.some(product => product.cases > 0);
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
     
-    if (!formData.po || !formData.address || !hasProducts) {
-      alert('Please fill in all required fields (PO#, Address, and at least one product)');
+    // If we're not in validation view yet, show validation
+    if (!showValidation) {
+      const hasProducts = formData.products.some(product => product.cases > 0);
+      
+      if (!formData.po || !formData.address || !hasProducts) {
+        alert('Please fill in all required fields (PO#, Address, and at least one product)');
+        return;
+      }
+      
+      setShowValidation(true);
+      navigate('/order-validation');
       return;
     }
-    
-    setShowValidation(true);
-    navigate('/order-validation');
+
+    // If we are in validation view, submit the order
+    try {
+      setIsSubmitting(true);
+      // Add your order submission logic here
+      
+      // After successful submission
+      await resetFormData();
+      setShowValidation(false);
+      navigate('/');
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      alert('Failed to submit order. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const refreshAddresses = () => {
@@ -204,13 +224,20 @@ function App() {
         <Route 
           path="/order-validation" 
           element={
-            <OrderValidation 
-              orderData={formData} 
-              onConfirm={handleSubmit} 
-              onCancel={() => setShowValidation(false)} 
-              isSubmitting={isSubmitting} 
-              onOrderSuccess={resetFormData} 
-            />
+            showValidation ? (
+              <OrderValidation 
+                orderData={formData} 
+                onConfirm={handleSubmit} 
+                onCancel={() => {
+                  setShowValidation(false);
+                  navigate('/');
+                }} 
+                isSubmitting={isSubmitting} 
+                onOrderSuccess={resetFormData} 
+              />
+            ) : (
+              navigate('/')
+            )
           } 
         />
         <Route path="/vieworders" element={<ViewOrders />} />
