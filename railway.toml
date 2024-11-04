@@ -1,3 +1,11 @@
 [build]
 builder = "nixpacks"
-buildCommand = "DISABLE_ESLINT_PLUGIN=true npm install --legacy-peer-deps && CI=false npm run build" 
+buildCommand = "DISABLE_ESLINT_PLUGIN=true CI=false npm install --legacy-peer-deps && npm run build"
+startCommand = "npm start"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on-failure"
+restartPolicyMaxRetries = 10
