@@ -101,7 +101,7 @@ function OrderForm({
                   <th>Flavor</th>
                   <th>Units/Cs</th>
                   <th>#Cases</th>
-                  <th>Available</th>
+                  <th>Avail. Cases</th>
                 </tr>
               </thead>
               <tbody>
