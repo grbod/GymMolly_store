@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useDropzone } from 'react-dropzone';
 
 function OrderForm({ 
   formData, 
@@ -8,9 +9,19 @@ function OrderForm({
   handleInputChange, 
   handleCasesChange, 
   handleSubmit,
-  handleDeleteClick 
+  handleDeleteClick,
+  handleFileUpload
 }) {
   const navigate = useNavigate();
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: handleFileUpload,
+    multiple: true,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'image/*': ['.png', '.jpg', '.jpeg']
+    }
+  });
 
   return (
     <div className="card shadow-sm bg-white">
@@ -130,20 +141,70 @@ function OrderForm({
           </div>
 
           <div className="mb-3">
-            <label htmlFor="shippingMethod" className="form-label">Shipping Method</label>
-            <select
-              className="form-select"
-              id="shippingMethod"
-              name="shippingMethod"
-              value={formData.shippingMethod}
-              onChange={handleInputChange}
-            >
-              <option value="FedEx Ground">FedEx Ground</option>
-              <option value="FedEx Home Delivery">FedEx Home Delivery</option>
-              <option value="FedEx 2Day">FedEx 2Day</option>
-              <option value="FedEx Express Saver">FedEx Express Saver</option>
-              <option value="FedEx Standard Overnight">FedEx Standard Overnight</option>
-            </select>
+            <label className="form-label" style={{ color: '#000000' }}>
+              Upload Pre-Created Shipping Labels
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <div 
+                {...getRootProps()} 
+                className="rounded p-4 text-center cursor-pointer"
+                style={{ 
+                  borderStyle: 'dashed',
+                  cursor: 'pointer',
+                  backgroundColor: isDragActive ? '#d4d7da' : '#e2e4e7',
+                  border: '3px dashed #949494',
+                  width: '160px',
+                  height: '160px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '10px'
+                }}
+              >
+                <input {...getInputProps()} />
+                {isDragActive ? (
+                  <p className="mb-0">Drop the files here...</p>
+                ) : (
+                  <p className="mb-0" style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
+                    Drag & drop your shipping<br />label files here,<br />or click to select
+                    <br />
+                    <small className="text-muted" style={{ fontSize: '0.8rem' }}>
+                      (Accepts PDF, PNG, JPG files)
+                    </small>
+                  </p>
+                )}
+              </div>
+              {formData.attachment && formData.attachment.length > 0 && (
+                <div className="mt-1" style={{ marginLeft: '5px' }}>
+                  {/* Calculate total cases */}
+                  {(() => {
+                    const totalCases = formData.products.reduce((sum, product) => sum + (parseInt(product.cases) || 0), 0);
+                    const numFiles = formData.attachment.length;
+                    const isMatch = totalCases === numFiles;
+                    
+                    return (
+                      <div style={{ marginBottom: '8px' }}>
+                        <small style={{ 
+                          color: isMatch ? '#198754' : '#dc3545',
+                          fontWeight: 'bold'
+                        }}>
+                          #{numFiles} Labels Uploaded | {totalCases} Cases Selected - {isMatch ? 'MATCH' : 'NOT MATCH'}
+                        </small>
+                      </div>
+                    );
+                  })()}
+                  
+                  {formData.attachment.map(file => (
+                    <div key={file.name} style={{ marginBottom: '4px' }}>
+                      <small className="text-success" style={{ display: 'flex', alignItems: 'center' }}>
+                        <span style={{ color: '#198754', marginRight: '4px' }}>✓</span>
+                        <span>File attached: {file.name}</span>
+                      </small>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <button type="submit" className="btn btn-primary">Submit</button>

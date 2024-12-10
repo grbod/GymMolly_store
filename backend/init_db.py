@@ -1,6 +1,6 @@
 from main import app, db, ItemDetail, InventoryQuantity, ShippingDetail, ShippingAddress, Order, OrderItem
 from sqlalchemy import text
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 def clear_database():
     try:
@@ -179,31 +179,31 @@ def add_sample_data():
         {
             'purchase_order_number': 'PO-2024-001',
             'shipping_address_id': 1,  # Gym Molly HQ
-            'created_at': datetime.utcnow() - timedelta(days=5),
+            'created_at': datetime.now(UTC) - timedelta(days=5),
             'shipping_method': 'Ground'
         },
         {
             'purchase_order_number': 'PO-2024-002',
             'shipping_address_id': 2,  # GNC Ruston
-            'created_at': datetime.utcnow() - timedelta(days=3),
+            'created_at': datetime.now(UTC) - timedelta(days=3),
             'shipping_method': 'Express'
         },
         {
             'purchase_order_number': 'PO-2024-003',
             'shipping_address_id': 3,  # GNC Marietta
-            'created_at': datetime.utcnow() - timedelta(days=2),
+            'created_at': datetime.now(UTC) - timedelta(days=2),
             'shipping_method': 'Ground'
         },
         {
             'purchase_order_number': 'PO-2024-004',
             'shipping_address_id': 4,  # GNC Smyrna
-            'created_at': datetime.utcnow() - timedelta(days=1),
+            'created_at': datetime.now(UTC) - timedelta(days=1),
             'shipping_method': 'Ground'
         },
         {
             'purchase_order_number': 'PO-2024-005',
             'shipping_address_id': 5,  # GNC Gainesville
-            'created_at': datetime.utcnow(),
+            'created_at': datetime.now(UTC),
             'shipping_method': 'Express'
         }
     ]

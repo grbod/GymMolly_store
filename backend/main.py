@@ -11,7 +11,8 @@ CORS(app, resources={
     r"/api/*": {
         "origins": ["http://localhost:3000", "https://gymmolly-store.onrender.com"],
         "methods": ["GET", "POST", "PUT", "DELETE"],
-        "allow_headers": ["Content-Type"]
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
     }
 })  # Add this right after creating the Flask app
 

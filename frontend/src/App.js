@@ -17,7 +17,7 @@ function App() {
     po: '',
     address: null,
     products: [],
-    shippingMethod: 'FedEx Ground'
+    attachment: []
   });
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +35,13 @@ function App() {
 
   const fetchAddresses = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/shipping-addresses`);
+      const response = await fetch(`${API_URL}/api/shipping-addresses`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       setAddresses(data);
     } catch (err) {
@@ -46,7 +52,13 @@ function App() {
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/inventory`);
+      const response = await fetch(`${API_URL}/api/inventory`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       setInventory(data);
       setFormData(prevState => ({
@@ -177,8 +189,18 @@ function App() {
         unitsCs: item.unitsCs,
         cases: 0
       })),
-      shippingMethod: 'FedEx Ground' // Reset shipping method to default
+      attachment: []
     });
+  };
+
+  // Add this function to handle file uploads
+  const handleFileUpload = (acceptedFiles) => {
+    if (acceptedFiles && acceptedFiles.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        attachment: acceptedFiles
+      }));
+    }
   };
 
   if (loading) return <div>Loading inventory data...</div>;
@@ -196,6 +218,7 @@ function App() {
             handleCasesChange={handleCasesChange}
             handleSubmit={handleSubmit}
             handleDeleteClick={handleDeleteClick}
+            handleFileUpload={handleFileUpload}
           />
         } />
         <Route path="/add-address" element={<AddAddress onAddressAdded={refreshAddresses} />} />

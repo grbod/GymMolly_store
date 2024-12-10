@@ -27,3 +27,14 @@ yarn-error.log*
 backend/venv/
 backend/__pycache__/
 backend/*.pyc
+
+# Environment files
+.env
+.env.development
+.env.production
+.env.local
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
