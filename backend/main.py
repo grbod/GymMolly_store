@@ -1,11 +1,35 @@
+import os
+from dotenv import load_dotenv
+
+# Determine which .env file to use
+FLASK_ENV = os.getenv('FLASK_ENV', 'development')
+env_file = '.env.development' if FLASK_ENV == 'development' else '.env.production'
+env_path = os.path.join(os.getcwd(), env_file)
+
+print(f"Loading environment from: {env_file}")
+load_dotenv(env_path, verbose=True)
+
+# Get environment variables
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+SENDER_EMAIL = os.getenv('SENDER_EMAIL')
+RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL')
+
+# Now import config after environment variables are loaded
 from datetime import datetime
 import io
 from flask import request, jsonify, send_file
 from flask_cors import CORS
 import json
 from sendemail import send_order_confirmation_email
-from config import app, db
+from config import app, db  # Move this import after loading env vars
 from shipstationcreate import create_shipstation_order
+import tempfile
+from shipping_label_creator import process_files
+
+print("\nEnvironment Variables:")
+print(f"SENDGRID_API_KEY: {'Found' if SENDGRID_API_KEY else 'Missing'}")
+print(f"SENDER_EMAIL: {'Found' if SENDER_EMAIL else 'Missing'}")
+print(f"RECIPIENT_EMAIL: {'Found' if RECIPIENT_EMAIL else 'Missing'}")
 
 CORS(app, resources={
     r"/api/*": {
@@ -213,21 +237,35 @@ def create_order():
         # Extract order details
         purchase_order_number = order_data.get('purchase_order_number')
         shipping_address_id = order_data.get('shipping_address_id')
-        shipping_method = order_data.get('shipping_method')  # Add this line
+        shipping_method = order_data.get('shipping_method')
         items = order_data.get('items', [])
 
         # Create new order
         new_order = Order(
             purchase_order_number=purchase_order_number,
             shipping_address_id=shipping_address_id,
-            shipping_method=shipping_method  # Add this line
+            shipping_method=shipping_method
         )
 
-        # Handle file attachment if present
+        # Process and handle file attachments
+        pdf_data = None
         if 'attachment' in request.files:
-            file = request.files['attachment']
-            if file:
-                new_order.attachment = file.read()
+            files = request.files.getlist('attachment')
+            if files:
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    # Save uploaded files
+                    for file in files:
+                        file_path = os.path.join(temp_dir, file.filename)
+                        file.save(file_path)
+                    
+                    # Process the files
+                    output_path = os.path.join(temp_dir, "processed_labels.pdf")
+                    process_files(temp_dir, output_path)
+                    
+                    # Read the processed file
+                    with open(output_path, 'rb') as f:
+                        pdf_data = f.read()
+                        new_order.attachment = pdf_data  # Save to database
 
         db.session.add(new_order)
         db.session.flush()  # Get the order ID
@@ -239,7 +277,7 @@ def create_order():
         # Update inventory quantities
         for item in items:
             # Get current inventory
-            inventory = InventoryQuantity.query.get(item['product_sku'])
+            inventory = db.session.get(InventoryQuantity, item['product_sku'])
             if not inventory:
                 raise Exception(f"SKU {item['product_sku']} not found in inventory")
                 
@@ -260,7 +298,7 @@ def create_order():
             order_items.append(order_item)
 
             # Get item details for email
-            item_detail = ItemDetail.query.get(item['product_sku'])
+            item_detail = db.session.get(ItemDetail, item['product_sku'])
             if item_detail:
                 email_items.append({
                     'sku': item['product_sku'],
@@ -273,15 +311,25 @@ def create_order():
         db.session.commit()
 
         # Get shipping address and item details
-        shipping_address = ShippingAddress.query.get(shipping_address_id)
+        shipping_address = db.session.get(ShippingAddress, shipping_address_id)
+        print(f"Debug - Shipping Address: {shipping_address.to_dict()}")
+        if not shipping_address:
+            raise Exception(f"Shipping address with ID {shipping_address_id} not found")
+
+        # Create item_details dictionary
         item_details = {item.sku: item for item in ItemDetail.query.all()}
 
-        # Send confirmation email with properly formatted items
-        send_order_confirmation_email(
-            new_order,
-            shipping_address,
-            email_items
-        )
+        # Send confirmation email with PDF attachment
+        try:
+            send_order_confirmation_email(
+                new_order,
+                shipping_address,
+                email_items,
+                pdf_data
+            )
+        except Exception as e:
+            print(f"Email error details: {str(e)}")
+            pass
 
         # Create ShipStation order
         create_shipstation_order(
@@ -289,7 +337,7 @@ def create_order():
             shipping_address,
             order_items,
             item_details,
-            db  # Pass the db object here
+            db
         )
 
         return jsonify({"message": "Order created successfully"}), 201
@@ -302,8 +350,8 @@ def create_order():
 @app.route('/api/orders/<int:order_id>/attachment', methods=['GET'])
 def get_order_attachment(order_id):
     try:
-        order = Order.query.get_or_404(order_id)
-        if not order.attachment:
+        order = db.session.get(Order, order_id)
+        if not order:
             return jsonify({'error': 'No attachment found'}), 404
             
         return send_file(
@@ -351,8 +399,50 @@ def get_orders():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Add this import at the end of the file, just before the if __name__ == '__main__': block
-from shipstationcreate import create_shipstation_order
+# Add this new route for processing labels
+@app.route('/api/process-labels', methods=['POST'])
+def process_shipping_labels():
+    try:
+        if 'files' not in request.files:
+            return jsonify({"error": "No files provided"}), 400
+
+        files = request.files.getlist('files')
+        
+        # Create a temporary directory to store uploaded files
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Save uploaded files to temp directory
+            saved_files = []
+            for file in files:
+                if file.filename:
+                    file_path = os.path.join(temp_dir, file.filename)
+                    file.save(file_path)
+                    saved_files.append(file_path)
+            
+            if not saved_files:
+                return jsonify({"error": "No valid files uploaded"}), 400
+            
+            # Process the files using your existing script
+            output_path = os.path.join(temp_dir, "processed_labels.pdf")
+            total_pages = process_files(temp_dir, output_path)
+            
+            # Read the processed file
+            with open(output_path, 'rb') as f:
+                processed_content = f.read()
+            
+            # Return the processed files data
+            return jsonify({
+                "message": f"Successfully processed {total_pages} labels",
+                "processedFiles": [{
+                    "name": file.filename,
+                    "content": processed_content.decode('latin1'),  # Convert bytes to string for JSON
+                    "type": file.content_type
+                } for file in files if file.filename]
+            })
+            
+    except Exception as e:
+        return jsonify({"error": f"Failed to process shipping labels: {str(e)}"}), 400
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

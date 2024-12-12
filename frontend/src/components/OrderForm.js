@@ -2,6 +2,8 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function OrderForm({ 
   formData, 
   addresses, 
@@ -10,18 +12,30 @@ function OrderForm({
   handleCasesChange, 
   handleSubmit,
   handleDeleteClick,
-  handleFileUpload
+  handleFileUpload,
+  shippingMethods
 }) {
   const navigate = useNavigate();
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: handleFileUpload,
+    onDrop: (acceptedFiles) => {
+      // Simply store the files, no processing yet
+      const updatedFiles = formData.attachment 
+        ? [...formData.attachment, ...acceptedFiles]
+        : acceptedFiles;
+      handleFileUpload(updatedFiles);
+    },
     multiple: true,
     accept: {
       'application/pdf': ['.pdf'],
       'image/*': ['.png', '.jpg', '.jpeg']
     }
   });
+
+  const handleFileRemove = (fileToRemove) => {
+    const updatedFiles = formData.attachment.filter(file => file !== fileToRemove);
+    handleFileUpload(updatedFiles);
+  };
 
   return (
     <div className="card shadow-sm bg-white">
@@ -166,10 +180,10 @@ function OrderForm({
                   <p className="mb-0">Drop the files here...</p>
                 ) : (
                   <p className="mb-0" style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
-                    Drag & drop your shipping<br />label files here,<br />or click to select
+                    Drag & drop shipping<br />labels here,<br />or click to select
                     <br />
                     <small className="text-muted" style={{ fontSize: '0.8rem' }}>
-                      (Accepts PDF, PNG, JPG files)
+                      (Upload PDF, PNG, JPG files)
                     </small>
                   </p>
                 )}
@@ -198,13 +212,62 @@ function OrderForm({
                     <div key={file.name} style={{ marginBottom: '4px' }}>
                       <small className="text-success" style={{ display: 'flex', alignItems: 'center' }}>
                         <span style={{ color: '#198754', marginRight: '4px' }}>✓</span>
-                        <span>File attached: {file.name}</span>
+                        <span>
+                          File attached: {file.name}
+                          <button
+                            type="button"
+                            className="btn btn-link btn-sm p-0 ms-2"
+                            onClick={() => handleFileRemove(file)}
+                            style={{ 
+                              lineHeight: 1,
+                              border: 'none',
+                              background: 'none',
+                              padding: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              position: 'relative',
+                              top: '0px'
+                            }}
+                            title="Remove file"
+                          >
+                            (<svg 
+                              width="14" 
+                              height="14" 
+                              viewBox="0 0 24 24" 
+                              fill="none" 
+                              stroke="#dc3545" 
+                              strokeWidth="2" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                            >
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>)
+                          </button>
+                        </span>
                       </small>
                     </div>
                   ))}
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="mb-3">
+            <label htmlFor="shippingMethod" className="form-label">Shipping Method</label>
+            <select
+              className="form-select"
+              id="shippingMethod"
+              name="shippingMethod"
+              value={formData.shippingMethod}
+              onChange={handleInputChange}
+            >
+              {shippingMethods.map((method) => (
+                <option key={method} value={method}>
+                  {method}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button type="submit" className="btn btn-primary">Submit</button>

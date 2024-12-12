@@ -42,12 +42,46 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
     // Check if PO already exists (case-insensitive)
     if (existingPOs.includes(orderData.po.toLowerCase())) {
       alert('This PO number has already been used. Please use a unique PO number.');
-      document.body.classList.remove('loading-cursor');  // Remove cursor if validation fails
+      document.body.classList.remove('loading-cursor');
+      return;
+    }
+
+    // Check if attachment exists
+    if (!orderData.attachment || orderData.attachment.length === 0) {
+      alert('Please attach shipping label(s) before submitting the order.');
+      document.body.classList.remove('loading-cursor');
+      return;
+    }
+
+    // Check if number of attachments matches number of cases
+    const totalCases = orderData.products.reduce((sum, product) => sum + (parseInt(product.cases) || 0), 0);
+    if (orderData.attachment.length !== totalCases) {
+      alert('The number of attached shipping labels must match the total number of cases ordered.');
+      document.body.classList.remove('loading-cursor');
       return;
     }
 
     try {
-      // Filter products to only include those with cases > 0 and format them correctly
+      // First process the shipping labels
+      const labelFormData = new FormData();
+      orderData.attachment.forEach(file => {
+        labelFormData.append('files', file);
+      });
+
+      const labelResponse = await fetch(`${API_URL}/api/process-labels`, {
+        method: 'POST',
+        body: labelFormData,
+        credentials: 'include'
+      });
+
+      if (!labelResponse.ok) {
+        const errorData = await labelResponse.json();
+        throw new Error(errorData.error || 'Failed to process shipping labels');
+      }
+
+      const { processedFiles } = await labelResponse.json();
+
+      // Create the order data object with processed labels
       const productsToOrder = orderData.products
         .filter(product => product.cases > 0)
         .map(product => ({
@@ -55,7 +89,6 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
           quantity: product.cases
         }));
 
-      // Create the order data object
       const orderPayload = {
         purchase_order_number: orderData.po,
         shipping_address_id: orderData.address.id,
@@ -63,15 +96,18 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
         items: productsToOrder
       };
 
+      // Submit the order with processed labels
       const formData = new FormData();
       formData.append('data', JSON.stringify(orderPayload));
       
-      if (orderData.attachment) {
-        formData.append('attachment', orderData.attachment);
-      }
+      // Append the original files directly instead of the processed ones
+      orderData.attachment.forEach((file, index) => {
+        formData.append('attachment', file);
+      });
 
       const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
+        credentials: 'include',
         body: formData
       });
 
@@ -165,10 +201,12 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
         </table>
       </section>
 
-      {orderData.attachment && (
+      {orderData.attachment && orderData.attachment.length > 0 && (
         <section>
-          <h3>Attachment</h3>
-          <p>✓ File attached: {orderData.attachment.name}</p>
+          <h3>Attachment{orderData.attachment.length > 1 ? 's' : ''}</h3>
+          {orderData.attachment.map((file, index) => (
+            <p key={index}>✓ File attached: {file.name}</p>
+          ))}
         </section>
       )}
 

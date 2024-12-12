@@ -17,7 +17,8 @@ function App() {
     po: '',
     address: null,
     products: [],
-    attachment: []
+    attachment: [],
+    shippingMethod: 'FedEx Ground'
   });
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -189,7 +190,8 @@ function App() {
         unitsCs: item.unitsCs,
         cases: 0
       })),
-      attachment: []
+      attachment: [],
+      shippingMethod: 'FedEx Ground'
     });
   };
 
@@ -219,6 +221,11 @@ function App() {
             handleSubmit={handleSubmit}
             handleDeleteClick={handleDeleteClick}
             handleFileUpload={handleFileUpload}
+            shippingMethods={[
+              'FedEx Ground',
+              'FedEx 2Day',
+              'FedEx Express Saver'
+            ]}
           />
         } />
         <Route path="/add-address" element={<AddAddress onAddressAdded={refreshAddresses} />} />

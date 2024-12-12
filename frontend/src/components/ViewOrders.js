@@ -29,6 +29,34 @@ function ViewOrders() {
     }
   };
 
+  const handleDownloadAttachment = async (orderId, poNumber) => {
+    try {
+      const response = await fetch(`${API_URL}/api/orders/${orderId}/attachment`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to download attachment');
+      }
+
+      // Create blob from response
+      const blob = await response.blob();
+      
+      // Create download link with PO number in filename
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PO_${poNumber}_shipping_labels.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      alert('Failed to download attachment');
+    }
+  };
+
   if (loading) return <div>Loading orders...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -43,6 +71,7 @@ function ViewOrders() {
             <th>Shipping Address</th>
             <th>Items Ordered</th>
             <th>Shipping Method</th>
+            <th>Attachments</th>
           </tr>
         </thead>
         <tbody>
@@ -79,6 +108,18 @@ function ViewOrders() {
                 </table>
               </td>
               <td>{order.shipping_method || 'Not specified'}</td>
+              <td>
+                {order.has_attachment ? (
+                  <button
+                    onClick={() => handleDownloadAttachment(order.order_id, order.purchase_order_number)}
+                    className="download-button"
+                  >
+                    Download Labels
+                  </button>
+                ) : (
+                  'No attachments'
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
