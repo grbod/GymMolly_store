@@ -270,7 +270,17 @@ function OrderForm({
             </select>
           </div>
 
-          <button type="submit" className="btn btn-primary">Submit</button>
+          <button 
+            type="submit" 
+            className="btn" 
+            style={{ 
+              backgroundColor: '#B2CFEC',
+              color: 'black',
+              border: 'none'
+            }}
+          >
+            Submit
+          </button>
           
           <div className="text-center mt-3">
             <button 
