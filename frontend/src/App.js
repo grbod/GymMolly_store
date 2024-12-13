@@ -232,7 +232,11 @@ function App() {
         <Route path="/edit-address/:id" element={<UpdateAddress onAddressUpdated={updateAddressInList} />} />
         <Route path="/updateinventory" element={<UpdateInventory onInventoryUpdated={fetchInventory} />} />
         <Route path="/order-validation" element={<OrderValidation orderData={formData} onConfirm={handleSubmit} onCancel={() => setShowValidation(false)} isSubmitting={isSubmitting} onOrderSuccess={resetFormData} />} />
-        <Route path="/vieworders" element={<ViewOrders />} />
+        <Route path="/vieworders" element={
+          <ViewOrders 
+            onInventoryUpdate={fetchInventory}
+          />
+        } />
       </Routes>
       
       <Modal show={showDeleteModal} onHide={handleDeleteCancel} centered>
