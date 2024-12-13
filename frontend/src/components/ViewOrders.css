@@ -53,3 +53,42 @@
 .download-button:active {
   background-color: #004085;
 }
+
+.status-processing {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.status-shipped {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.status-voided {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.void-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.void-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.void-button:hover:not(:disabled) {
+    background-color: #c82333;
+}

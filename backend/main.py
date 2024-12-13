@@ -125,6 +125,7 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     attachment = db.Column(db.LargeBinary)
     shipping_method = db.Column(db.String(100), nullable=False)  # Add this line
+    order_status = db.Column(db.String(20), nullable=False, default='Processing')
     
     # Add this relationship
     items = db.relationship('OrderItem', backref='order', lazy=True)
@@ -136,7 +137,8 @@ class Order(db.Model):
             'shipping_address_id': self.shipping_address_id,
             'created_at': self.created_at,
             'has_attachment': self.attachment is not None,
-            'shipping_method': self.shipping_method  # Add this line
+            'shipping_method': self.shipping_method,  # Add this line
+            'order_status': self.order_status,
         }
 
 class OrderItem(db.Model):
@@ -390,7 +392,8 @@ def get_orders():
                 'shipping_address': shipping_address.to_dict(),
                 'items': items,
                 'has_attachment': order.attachment is not None,
-                'shipping_method': order.shipping_method  # Add this line
+                'shipping_method': order.shipping_method,
+                'order_status': order.order_status
             }
             orders_data.append(order_data)
         
@@ -442,7 +445,69 @@ def process_shipping_labels():
     except Exception as e:
         return jsonify({"error": f"Failed to process shipping labels: {str(e)}"}), 400
 
+# Add new void order endpoint
+@app.route('/api/orders/<int:order_id>/void', methods=['POST'])
+def void_order(order_id):
+    try:
+        order = db.session.get(Order, order_id)
+        if not order:
+            return jsonify({"error": "Order not found"}), 404
+            
+        if order.order_status != 'Processing':
+            return jsonify({
+                "error": f"Cannot void order in {order.order_status} status"
+            }), 400
 
+        # Start transaction
+        db.session.begin_nested()
+        
+        # Return items to inventory
+        for order_item in OrderItem.query.filter_by(order_id=order_id).all():
+            inventory = db.session.get(InventoryQuantity, order_item.product_sku)
+            if inventory:
+                inventory.quantity += order_item.quantity
+            else:
+                db.session.rollback()
+                return jsonify({
+                    "error": f"Inventory record not found for SKU: {order_item.product_sku}"
+                }), 400
+        
+        # Update order status
+        order.order_status = 'Voided'
+        db.session.commit()
+        
+        return jsonify({"message": "Order voided successfully"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
+
+# Add shipping webhook endpoint
+@app.route('/api/webhooks/shipping', methods=['POST'])
+def shipping_webhook():
+    try:
+        data = request.json
+        order_id = data.get('orderId')
+        
+        if not order_id:
+            return jsonify({"error": "Order ID is required"}), 400
+            
+        order = db.session.get(Order, order_id)
+        if not order:
+            return jsonify({"error": "Order not found"}), 404
+            
+        if order.order_status != 'Processing':
+            return jsonify({
+                "error": f"Cannot update shipping for order in {order.order_status} status"
+            }), 400
+            
+        order.order_status = 'Shipped'
+        db.session.commit()
+        
+        return jsonify({"message": "Order status updated to Shipped"}), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)

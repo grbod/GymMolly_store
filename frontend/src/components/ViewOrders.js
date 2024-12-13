@@ -57,6 +57,30 @@ function ViewOrders() {
     }
   };
 
+  const handleVoidOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to void this order?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/api/orders/${orderId}/void`, {
+        method: 'POST',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to void order');
+      }
+      
+      // Refresh orders list
+      fetchOrders();
+      
+    } catch (error) {
+      console.error('Error voiding order:', error);
+      alert(error.message);
+    }
+  };
+
   if (loading) return <div>Loading orders...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -72,6 +96,8 @@ function ViewOrders() {
             <th>Items Ordered</th>
             <th>Shipping Method</th>
             <th>Attachments</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -119,6 +145,18 @@ function ViewOrders() {
                 ) : (
                   'No attachments'
                 )}
+              </td>
+              <td className={`status-${(order.order_status || 'Processing').toLowerCase()}`}>
+                {order.order_status || 'Processing'}
+              </td>
+              <td>
+                <button
+                  className="void-button"
+                  onClick={() => handleVoidOrder(order.order_id)}
+                  disabled={order.order_status !== 'Processing'}
+                >
+                  Void Order
+                </button>
               </td>
             </tr>
           ))}
