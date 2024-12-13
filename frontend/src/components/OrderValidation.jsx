@@ -160,7 +160,7 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
       <h2>Please Verify Your Order</h2>
       
       <section>
-        <h3>Purchase Order</h3>
+        <h3><strong>Purchase Order</strong></h3>
         <p>{orderData.po}</p>
         {existingPOs.includes(orderData.po.toLowerCase()) && (
           <p className="error-message">Warning: This PO number has already been used! Use a different PO#.</p>
@@ -168,7 +168,7 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
       </section>
 
       <section>
-        <h3>Shipping Address</h3>
+        <h3><strong>Shipping Address</strong></h3>
         <p>{orderData.address.companyName}</p>
         <p>{orderData.address.addressLine1}</p>
         {orderData.address.addressLine2 && <p>{orderData.address.addressLine2}</p>}
@@ -176,7 +176,7 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
       </section>
 
       <section>
-        <h3>Ordered Items</h3>
+        <h3><strong>Ordered Items</strong></h3>
         <table>
           <thead>
             <tr>
@@ -203,19 +203,17 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
 
       {orderData.attachment && orderData.attachment.length > 0 && (
         <section>
-          <h3>Attachment{orderData.attachment.length > 1 ? 's' : ''}</h3>
+          <h3><strong>Attachments</strong></h3>
           {orderData.attachment.map((file, index) => (
             <p key={index}>✓ File attached: {file.name}</p>
           ))}
         </section>
       )}
 
-      {/* Add new section for Shipping Method */}
       <section>
-        <h3>Shipping Method</h3>
+        <h3><strong>Shipping Method</strong></h3>
         <p>{orderData.shippingMethod}</p>
       </section>
-
 
       <div className="button-group">
         <button 

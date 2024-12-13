@@ -27,6 +27,19 @@
   padding: 0 4px;
 }
 
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .orders-header h2 {
   color: #1a237e;
   font-size: 24px;
@@ -284,4 +297,55 @@ button {
 /* Remove any tap highlights on mobile */
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+.orders-footer {
+  display: none;
+}
+
+.back-button {
+  background-color: #6c757d;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
+.export-button {
+  background-color: #28a745;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.export-button:hover {
+  background-color: #218838;
+}
+
+.button-icon {
+  font-size: 14px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .header-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .back-button,
+  .export-button {
+    width: 100%;
+    justify-content: center;
+  }
 }

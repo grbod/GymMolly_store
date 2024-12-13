@@ -70,9 +70,10 @@
 }
 
 .validation-container h3 {
-  color: #1d1d1f;
-  margin-bottom: 12px;
+  color: #1a237e;
   font-size: 18px;
+  margin-bottom: 12px;
+  font-weight: 600;
 }
 
 .error-message {
