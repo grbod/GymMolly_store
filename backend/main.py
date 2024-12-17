@@ -1,5 +1,44 @@
 import os
 from dotenv import load_dotenv
+from flask import request, jsonify
+import requests
+import json
+import traceback
+from base64 import b64encode
+import logging
+from pathlib import Path
+
+# Load environment variables (keep this section ONCE at the top)
+base_dir = Path(__file__).resolve().parent
+FLASK_ENV = os.getenv('FLASK_ENV', 'development')
+env_file = '.env.development' if FLASK_ENV == 'development' else '.env.production'
+env_path = base_dir / env_file
+
+print(f"Loading environment from: {env_path}")
+load_dotenv(env_path)
+
+# Get environment variables (consolidate all env var loading here)
+SS_CLIENT_ID = os.getenv('SS_CLIENT_ID')
+SS_CLIENT_SECRET = os.getenv('SS_CLIENT_SECRET')
+SS_STORE_ID = os.getenv('SS_STORE_ID')
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+SENDER_EMAIL = os.getenv('SENDER_EMAIL')
+RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL')
+
+# Verify credentials are loaded
+print("\nEnvironment Variables Check:")
+print(f"SS_CLIENT_ID: {'Found' if SS_CLIENT_ID else 'Missing'}")
+print(f"SS_CLIENT_SECRET: {'Found' if SS_CLIENT_SECRET else 'Missing'}")
+print(f"SS_STORE_ID: {'Found' if SS_STORE_ID else 'Missing'}")
+print(f"SENDGRID_API_KEY: {'Found' if SENDGRID_API_KEY else 'Missing'}")
+print(f"SENDER_EMAIL: {'Found' if SENDER_EMAIL else 'Missing'}")
+print(f"RECIPIENT_EMAIL: {'Found' if RECIPIENT_EMAIL else 'Missing'}")
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 # Determine which .env file to use
 FLASK_ENV = os.getenv('FLASK_ENV', 'development')
@@ -14,7 +53,6 @@ SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
 SENDER_EMAIL = os.getenv('SENDER_EMAIL')
 RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL')
 
-# Now import config after environment variables are loaded
 from datetime import datetime
 import io
 from flask import request, jsonify, send_file
@@ -125,7 +163,7 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     attachment = db.Column(db.LargeBinary)
     shipping_method = db.Column(db.String(100), nullable=False)  # Add this line
-    order_status = db.Column(db.String(20), nullable=False, default='Processing')
+    order_status = db.Column(db.String(50), nullable=False, default='Processing')
     
     # Add this relationship
     items = db.relationship('OrderItem', backref='order', lazy=True)
@@ -509,5 +547,91 @@ def shipping_webhook():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+@app.route('/api/webhooks/shipstation', methods=['POST'])
+def shipstation_webhook():
+    print("\n=== WEBHOOK ENDPOINT HIT ===")
+    logging.info("Webhook received")
+    
+    try:
+        data = request.get_json()
+        logging.info(f"Initial webhook data: {data}")
+        
+        if data.get('resource_type') == 'FULFILLMENT_SHIPPED':
+            resource_url = data.get('resource_url')
+            logging.info(f"Resource URL: {resource_url}")
+            
+            if not SS_CLIENT_ID or not SS_CLIENT_SECRET:
+                error_msg = "ShipStation credentials not found"
+                logging.error(error_msg)
+                return jsonify({"error": error_msg}), 500
+            
+            # Create auth header
+            auth_string = f"{SS_CLIENT_ID}:{SS_CLIENT_SECRET}"
+            ss_auth = b64encode(auth_string.encode()).decode()
+            
+            headers = {
+                'Authorization': f'Basic {ss_auth}',
+                'Content-Type': 'application/json'
+            }
+            
+            logging.info("Making request to ShipStation API...")
+            try:
+                response = requests.get(resource_url, headers=headers, timeout=10)
+                logging.info(f"Response status: {response.status_code}")
+                
+                if response.ok:
+                    fulfillment_data = response.json()
+                    
+                    # Extract the first fulfillment
+                    if fulfillment_data.get('fulfillments') and len(fulfillment_data['fulfillments']) > 0:
+                        fulfillment = fulfillment_data['fulfillments'][0]
+                        
+                        # Extract order number and ship date
+                        order_number = fulfillment.get('orderNumber')
+                        ship_date_str = fulfillment.get('shipDate')
+                        
+                        if order_number and ship_date_str:
+                            # Simply split at 'T' and take the first part for YYYY-MM-DD
+                            formatted_ship_date = ship_date_str.split('T')[0]
+                            
+                            # Update the order in the database
+                            order = Order.query.filter_by(purchase_order_number=order_number).first()
+                            
+                            if order:
+                                order.order_status = f"Shipped {formatted_ship_date}"
+                                db.session.commit()
+                                
+                                logging.info(f"Updated order {order_number} status to: Shipped {formatted_ship_date}")
+                                return jsonify({
+                                    "message": "Order status updated",
+                                    "order_number": order_number,
+                                    "new_status": f"Shipped {formatted_ship_date}"
+                                }), 200
+                            else:
+                                logging.warning(f"Order not found: {order_number}")
+                                return jsonify({"error": f"Order {order_number} not found"}), 404
+                        else:
+                            logging.error("Missing order number or ship date in fulfillment data")
+                            return jsonify({"error": "Missing required fulfillment data"}), 400
+                    else:
+                        logging.error("No fulfillments found in response")
+                        return jsonify({"error": "No fulfillments found"}), 400
+                else:
+                    logging.error(f"Error response: {response.text}")
+                    return jsonify({"error": "Failed to fetch fulfillment details"}), response.status_code
+                    
+            except requests.exceptions.RequestException as e:
+                error_msg = f"API request failed: {str(e)}"
+                logging.error(error_msg)
+                return jsonify({"error": error_msg}), 500
+                
+        return jsonify({"message": "Webhook processed"}), 200
+        
+    except Exception as e:
+        error_msg = f"Error processing webhook: {str(e)}"
+        logging.error(error_msg)
+        traceback.print_exc()
+        return jsonify({"error": error_msg}), 500
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)

@@ -3,7 +3,7 @@ import base64
 from datetime import datetime
 import json
 import math
-from config import app, db, SS_CLIENT_ID, SS_CLIENT_SECRET, SS_BASE_URL, SS_STORE_ID
+from config import SS_CLIENT_ID, SS_CLIENT_SECRET, SS_BASE_URL, SS_STORE_ID
 
 # Editable constant for customer note
 CUSTOMER_NOTE = "Questions? Please call Greg Booth from Gym Molly at (323) 538-2195"

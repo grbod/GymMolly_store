@@ -4,8 +4,8 @@ from datetime import datetime, timedelta, UTC
 
 def clear_database():
     try:
-        # Disable foreign key checks temporarily if needed
-        db.session.execute(text('TRUNCATE TABLE shipping_address, shipping_detail, inventory_quantity, item_detail RESTART IDENTITY CASCADE'))
+        # Update TRUNCATE statement
+        db.session.execute(text('TRUNCATE TABLE shipping_addresses, shipping_detail, inventory_quantity, item_detail RESTART IDENTITY CASCADE'))
         db.session.commit()
         print("Cleared existing data from database")
     except Exception as e:
