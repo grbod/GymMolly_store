@@ -71,7 +71,7 @@ print(f"RECIPIENT_EMAIL: {'Found' if RECIPIENT_EMAIL else 'Missing'}")
 
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:3000", "https://gymmolly-store.onrender.com"],
+        "origins": ["http://localhost:3000", "https://64.176.218.24","http://64.176.218.24"],
         "methods": ["GET", "POST", "PUT", "DELETE"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True

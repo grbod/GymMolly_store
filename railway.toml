@@ -1,3 +1,0 @@
-[build]
-builder = "nixpacks"
-buildCommand = "DISABLE_ESLINT_PLUGIN=true npm install --legacy-peer-deps && CI=false npm run build" 
