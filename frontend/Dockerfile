@@ -7,7 +7,7 @@ COPY package*.json ./
 RUN npm install
 
 # Copy source code
-COPY . .
+COPY ./frontend .
 
 # Build application
 RUN npm run build
@@ -17,4 +17,3 @@ FROM nginx:alpine
 COPY --from=builder /app/build /usr/share/nginx/html
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-# test

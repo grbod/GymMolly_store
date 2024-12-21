@@ -9,8 +9,8 @@ services:
 
   frontend:
     build: 
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     environment:
       - REACT_APP_API_URL=http://64.176.218.24
 
