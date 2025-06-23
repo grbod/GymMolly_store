@@ -79,7 +79,7 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
         throw new Error(errorData.error || 'Failed to process shipping labels');
       }
 
-      const { processedFiles } = await labelResponse.json();
+      await labelResponse.json();
 
       // Create the order data object with processed labels
       const productsToOrder = orderData.products

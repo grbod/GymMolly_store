@@ -2,8 +2,6 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
 function OrderForm({ 
   formData, 
   addresses, 

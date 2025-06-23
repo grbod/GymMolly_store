@@ -25,8 +25,6 @@ function App() {
   const [error, setError] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showValidation, setShowValidation] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -231,7 +229,7 @@ function App() {
         <Route path="/add-address" element={<AddAddress onAddressAdded={refreshAddresses} />} />
         <Route path="/edit-address/:id" element={<UpdateAddress onAddressUpdated={updateAddressInList} />} />
         <Route path="/updateinventory" element={<UpdateInventory onInventoryUpdated={fetchInventory} />} />
-        <Route path="/order-validation" element={<OrderValidation orderData={formData} onConfirm={handleSubmit} onCancel={() => setShowValidation(false)} isSubmitting={isSubmitting} onOrderSuccess={resetFormData} />} />
+        <Route path="/order-validation" element={<OrderValidation orderData={formData} onConfirm={handleSubmit} onCancel={() => navigate('/')} onOrderSuccess={resetFormData} />} />
         <Route path="/vieworders" element={
           <ViewOrders 
             onInventoryUpdate={fetchInventory}
