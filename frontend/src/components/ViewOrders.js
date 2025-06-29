@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './ViewOrders.css';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaFileExport } from 'react-icons/fa';
+import { FaArrowLeft, FaFileExport, FaCalculator } from 'react-icons/fa';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -99,6 +99,58 @@ function ViewOrders({ onInventoryUpdate }) {
     }
   };
 
+  const handleBillingExport = async () => {
+    try {
+      // Create simplified CSV content for billing
+      const headers = [
+        'Order_Number',
+        'Store_Name',
+        'Total_Cases',
+        'Order_Status',
+        'Shipping_Method'
+      ];
+
+      // Group by order and sum total cases
+      const billingRows = orders.map(order => {
+        const totalCases = order.items.reduce((sum, item) => sum + item.quantity, 0);
+        return [
+          order.purchase_order_number,
+          order.shipping_address.companyName,
+          totalCases,
+          order.order_status || 'Processing',
+          order.shipping_method || 'Not specified'
+        ];
+      });
+
+      // Convert to CSV
+      const csvContent = [
+        headers.join(','),
+        ...billingRows.map(row => row.map(cell => 
+          `"${(cell || '').toString().replace(/"/g, '""')}"`
+        ).join(','))
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Generate filename with current date
+      const date = new Date().toISOString().split('T')[0].replace(/-/g, '_');
+      link.download = `billing_export_${date}.csv`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Error exporting billing data:', error);
+      alert('Failed to export billing data');
+    }
+  };
+
   const handleExport = async () => {
     try {
       // Create CSV content
@@ -189,6 +241,13 @@ function ViewOrders({ onInventoryUpdate }) {
             >
               <FaFileExport className="button-icon" /> Export to CSV
             </button>
+            
+            <button 
+              className="action-button billing-export-button"
+              onClick={handleBillingExport}
+            >
+              <FaCalculator className="button-icon" /> Export for Billing
+            </button>
           </div>
         </div>
       </div>
@@ -211,7 +270,7 @@ function ViewOrders({ onInventoryUpdate }) {
               .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
               .map((order) => (
                 <tr key={order.order_id} className="order-row">
-                  <td>{new Date(order.created_at).toLocaleDateString()}</td>
+                  <td>{new Date(order.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' })}</td>
                   <td className="po-number">{order.purchase_order_number}</td>
                   <td className="address-cell">
                     <div className="address-content">

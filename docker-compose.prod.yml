@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3001:80"
+    environment:
+      - REACT_APP_API_URL=https://gymmolly.bodytools.work
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    ports:
+      - "5001:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=sqlite:///app/data/gymmolly.db
+      # PostgreSQL for future use (commented out):
+      # - DATABASE_URL=postgresql://user:password@host:5432/gymmolly_db
+      - SS_CLIENT_ID=${SS_CLIENT_ID}
+      - SS_CLIENT_SECRET=${SS_CLIENT_SECRET}
+      - SS_STORE_ID=${SS_STORE_ID}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - SENDER_EMAIL=${SENDER_EMAIL}
+      - RECIPIENT_EMAIL=${RECIPIENT_EMAIL}
+    volumes:
+      # Mount data directory for SQLite database persistence
+      - ./data:/app/data
+      # Mount uploads directory for file attachments
+      - ./uploads:/app/uploads
+    restart: unless-stopped

@@ -8,14 +8,14 @@
 
 .page-wrapper {
   width: 100%;
-  min-width: 1600px;
   padding: 8px;
   box-sizing: border-box;
   background-color: #f5f5f7; /* Match the background color of the page */
 }
 
 .view-orders-container {
-  width: 98%;
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 12px;
   background-color: #f5f5f7;
@@ -53,63 +53,74 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow-x: auto;
   width: 100%;
-  min-width: 1600px;
-  margin: 0 -12px;
-  padding: 0 12px;
 }
 
 .orders-table {
   width: 100%;
-  min-width: 1600px;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
   margin: 0;
   padding: 0;
 }
 
-.orders-table th,
-.orders-table td {
+.orders-table th {
   white-space: nowrap;
+  background-color: #f5f5f7;
+  font-weight: 600;
+  color: #333;
+  padding: 12px 8px;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
+.orders-table td {
+  padding: 12px 8px;
+  vertical-align: top;
+}
+
+/* Column widths - responsive */
 .orders-table th:nth-child(1),
 .orders-table td:nth-child(1) {
-  min-width: 100px;
+  width: 80px;
 }
 
 .orders-table th:nth-child(2),
 .orders-table td:nth-child(2) {
-  min-width: 120px;
+  width: 100px;
 }
 
 .orders-table th:nth-child(3),
 .orders-table td:nth-child(3) {
-  min-width: 250px;
+  width: 180px;
+  max-width: 180px;
 }
 
 .orders-table th:nth-child(4),
 .orders-table td:nth-child(4) {
-  min-width: 400px;
+  width: auto;
+  min-width: 200px;
 }
 
 .orders-table th:nth-child(5),
 .orders-table td:nth-child(5) {
-  min-width: 120px;
+  width: 100px;
 }
 
 .orders-table th:nth-child(6),
 .orders-table td:nth-child(6) {
-  min-width: 140px;
+  width: 110px;
 }
 
 .orders-table th:nth-child(7),
 .orders-table td:nth-child(7) {
-  min-width: 120px;
+  width: 90px;
 }
 
 .orders-table th:nth-child(8),
 .orders-table td:nth-child(8) {
-  min-width: 120px;
+  width: 90px;
 }
 
 .order-row {
@@ -121,10 +132,6 @@
   background-color: #f8f9fa;
 }
 
-.order-row td {
-  padding: 16px;
-  vertical-align: top;
-}
 
 .po-number {
   font-family: monospace;
@@ -132,13 +139,22 @@
 }
 
 .address-cell {
-  max-width: 200px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .address-content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.address-content span {
+  white-space: normal;
+  word-break: break-word;
 }
 
 .address-content strong {
@@ -149,21 +165,20 @@
   background: #f8f9fa;
   border-radius: 4px;
   padding: 4px;
-  min-width: 300px;
+  width: 100%;
 }
 
 .items-table {
   width: 100%;
-  font-size: 12px;
+  font-size: 11px;
   border-collapse: collapse;
 }
 
 .items-table th,
 .items-table td {
-  padding: 4px 6px;
+  padding: 3px 4px;
   border-bottom: 1px solid #e0e0e0;
-  font-size: 12px;
-  white-space: nowrap;
+  font-size: 11px;
 }
 
 .items-table th {
@@ -175,22 +190,25 @@
 
 .items-table th:nth-child(1),
 .items-table td:nth-child(1) {
-  min-width: 100px;
+  width: 40%;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .items-table th:nth-child(2),
 .items-table td:nth-child(2) {
-  min-width: 50px;
+  width: 20%;
 }
 
 .items-table th:nth-child(3),
 .items-table td:nth-child(3) {
-  min-width: 80px;
+  width: 25%;
+  white-space: normal;
 }
 
 .items-table th:nth-child(4),
 .items-table td:nth-child(4) {
-  min-width: 40px;
+  width: 15%;
   text-align: center;
 }
 
@@ -199,13 +217,14 @@
 }
 
 .action-button {
-  padding: 8px 16px;
+  padding: 6px 12px;
   border: none;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
+  white-space: nowrap;
 }
 
 .download-button {
@@ -222,7 +241,7 @@
   color: white;
   border: none !important;
   outline: none !important;
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -230,6 +249,7 @@
   z-index: 1;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  font-size: 12px;
 }
 
 .void-button:hover,
@@ -249,10 +269,11 @@
 
 .status-badge {
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .status-processing {
@@ -325,6 +346,18 @@ button {
 
 .export-button:hover {
   background-color: #218838;
+}
+
+.billing-export-button {
+  background-color: #6f42c1;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.billing-export-button:hover {
+  background-color: #5a32a3;
 }
 
 .button-icon {
