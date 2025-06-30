@@ -194,9 +194,43 @@ class OrderItem(db.Model):
             'quantity': self.quantity
         }
 
-# Create the database tables
+# Create the database tables only if they don't exist
+import os
+import time
+
+def init_database():
+    """Initialize database with retry logic"""
+    max_retries = 3
+    retry_delay = 2
+    
+    for attempt in range(max_retries):
+        try:
+            # Ensure database directory exists
+            db_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+            if db_url.startswith('sqlite:////'):
+                db_path = db_url.replace('sqlite:////', '/')
+                db_dir = os.path.dirname(db_path)
+                if db_dir and not os.path.exists(db_dir):
+                    os.makedirs(db_dir, exist_ok=True)
+                    print(f"Created database directory: {db_dir}")
+            
+            # Create tables
+            db.create_all()
+            print("Database tables initialized successfully")
+            return True
+            
+        except Exception as e:
+            print(f"Database initialization attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("Failed to initialize database after all retries")
+                # Don't crash the app - it might work on first request
+                return False
+
 with app.app_context():
-    db.create_all()
+    init_database()
 
 # CRUD operations for ShippingAddress (previously Address)
 

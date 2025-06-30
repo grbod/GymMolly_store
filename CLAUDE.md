@@ -37,7 +37,7 @@ This is a **GymMolly e-commerce order management system** with React frontend an
 ### System Architecture
 - **Frontend**: React 18 with Bootstrap UI, handles order creation and management
 - **Backend**: Flask REST API with SQLAlchemy ORM, manages orders and integrations
-- **Database**: PostgreSQL (production), SQLite (development)
+- **Database**: SQLite (both development and production)
 - **External APIs**: ShipStation (fulfillment), SendGrid (email notifications)
 - **Deployment**: Docker Compose + Nginx reverse proxy
 
@@ -56,7 +56,7 @@ This is a **GymMolly e-commerce order management system** with React frontend an
 
 ### Environment Configuration
 - Development: Uses `.env.development` with local SQLite
-- Production: Uses `.env.production` with PostgreSQL
+- Production: Uses `.env.production` with SQLite
 - Required variables: `DATABASE_URL`, `SS_CLIENT_ID`, `SS_CLIENT_SECRET`, `SS_STORE_ID`, `SENDGRID_API_KEY`, `SENDER_EMAIL`, `RECIPIENT_EMAIL`
 
 ### API Integration Details

@@ -1,6 +1,7 @@
 from main import app, db, ItemDetail, InventoryQuantity, ShippingDetail, ShippingAddress, Order, OrderItem
 from sqlalchemy import text
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc
 
 def clear_database():
     try:

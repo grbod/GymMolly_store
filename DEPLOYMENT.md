@@ -25,38 +25,41 @@ git clone <your-repo-url> gymmolly
 cd gymmolly
 ```
 
-### 3. Create Data Directories
+### 3. Set Up Environment
 
 ```bash
-mkdir -p data uploads
-chmod 755 data uploads
+# Copy the production environment file
+cp backend/.env.production .env
+
+# Edit if you need to change any values
+# nano .env
 ```
 
-### 4. Copy Production Environment File
+### 4. Run Setup Script
 
 ```bash
-cp backend/.env.production .env
-# Edit if needed: nano .env
+# This script will:
+# - Create necessary directories
+# - Set proper permissions
+# - Create database file
+# - Optionally initialize with sample data
+./deploy-setup.sh
 ```
 
 ### 5. Deploy with Docker Compose
 
 ```bash
-# Use the production compose file
+# Build and start all services
 docker-compose -f docker-compose.prod.yml up -d --build
 
-# Check logs
+# Check container health
+docker-compose -f docker-compose.prod.yml ps
+
+# Monitor logs (press Ctrl+C to exit)
 docker-compose -f docker-compose.prod.yml logs -f
 ```
 
-### 6. Initialize the Database
-
-```bash
-# First time only
-docker-compose -f docker-compose.prod.yml exec backend python init_db.py
-```
-
-### 7. Configure Nginx
+### 6. Configure Nginx
 
 Add the server block from `nginx-server-config.conf` to your existing Nginx:
 
@@ -163,7 +166,39 @@ crontab -e
 
 ## Troubleshooting
 
-1. **Port conflicts**: Ensure ports 3001 and 5001 are available
-2. **Permission issues**: Check ownership of data/uploads directories
-3. **Database locked**: Stop containers before manual database operations
-4. **Nginx 502 errors**: Check if containers are running with `docker ps`
+### Common Issues and Solutions
+
+1. **Backend container keeps restarting**
+   - Check logs: `docker-compose -f docker-compose.prod.yml logs backend`
+   - Ensure data directory exists and has proper permissions
+   - Run `./deploy-setup.sh` if you haven't already
+
+2. **Database connection errors**
+   - The database file is automatically created by the setup script
+   - If issues persist: `docker-compose -f docker-compose.prod.yml exec backend sqlite3 /app/data/gymmolly.db "SELECT 1;"`
+
+3. **Port conflicts**
+   - Ensure ports 3001 and 5001 are available
+   - Change ports in docker-compose.prod.yml if needed
+
+4. **Nginx 502 errors**
+   - Check if containers are healthy: `docker-compose -f docker-compose.prod.yml ps`
+   - Backend takes ~40 seconds to start (database initialization)
+   - Monitor backend logs during startup
+
+5. **Permission issues**
+   - The setup script handles permissions automatically
+   - If manual fix needed: `chmod 755 data uploads && chmod 666 data/gymmolly.db`
+
+### Quick Health Check
+
+```bash
+# Check all services
+docker-compose -f docker-compose.prod.yml ps
+
+# Test backend API
+curl http://localhost:5001/api/inventory
+
+# Test frontend
+curl http://localhost:3001
+```
