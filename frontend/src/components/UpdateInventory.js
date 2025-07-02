@@ -17,7 +17,13 @@ function UpdateInventory({ onInventoryUpdated }) {
 
     const fetchInventory = async () => {
         try {
-            const response = await fetch(`${API_URL}/api/inventory`);
+            const response = await fetch(`${API_URL}/api/inventory`, {
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
             const data = await response.json();
             setInventory(data);
             setLoading(false);
@@ -40,6 +46,7 @@ function UpdateInventory({ onInventoryUpdated }) {
             const updatePromises = Object.entries(pendingChanges).map(([sku, quantity]) => 
                 fetch(`${API_URL}/api/inventory/${sku}`, {
                     method: 'PUT',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
                     },

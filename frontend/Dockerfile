@@ -13,6 +13,12 @@ RUN npm config set fetch-retry-maxtimeout 600000 && \
 # Copy the rest of the frontend code
 COPY . .
 
+# Accept build argument for API URL
+ARG REACT_APP_API_URL
+
+# Set environment variable for build
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+
 # Build the application
 RUN npm run build
 

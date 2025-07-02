@@ -183,9 +183,14 @@ def process_files(input_dir, output_filename):
     # Print dimensions of output PDF
     print_output_dimensions(output_filename)
     
-    # Create trimmed version
-    output_trimmed = output_filename.replace('.pdf', '_trimmed.pdf')
-    trim_pdf_margins(output_filename, output_trimmed)
+    # Skip trimming if poppler is not installed
+    try:
+        # Create trimmed version
+        output_trimmed = output_filename.replace('.pdf', '_trimmed.pdf')
+        trim_pdf_margins(output_filename, output_trimmed)
+    except Exception as e:
+        print(f"Skipping PDF trimming: {e}")
+        # Continue without trimming
     
     return total_pages
 

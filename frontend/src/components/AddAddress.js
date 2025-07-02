@@ -42,6 +42,7 @@ function AddAddress({ onAddressAdded }) {
     try {
       const response = await fetch(`${API_URL}/api/shipping-addresses`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

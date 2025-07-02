@@ -26,7 +26,13 @@ function UpdateAddress({ onAddressUpdated }) {
     // Fetch the existing address data
     const fetchAddress = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/shipping-addresses/${id}`);
+        const response = await fetch(`${API_URL}/api/shipping-addresses/${id}`, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
         if (!response.ok) {
           throw new Error('Address not found');
         }
@@ -57,6 +63,7 @@ function UpdateAddress({ onAddressUpdated }) {
     try {
       const response = await fetch(`${API_URL}/api/shipping-addresses/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

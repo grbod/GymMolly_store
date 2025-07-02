@@ -18,7 +18,13 @@ function ViewOrders({ onInventoryUpdate }) {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/orders`);
+      const response = await fetch(`${API_URL}/api/orders`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
       if (!response.ok) {
         const errorData = await response.text();
         throw new Error(`Failed to fetch orders: ${response.status} ${response.statusText}. ${errorData}`);
@@ -36,7 +42,9 @@ function ViewOrders({ onInventoryUpdate }) {
 
   const handleDownloadAttachment = async (orderId, poNumber) => {
     try {
-      const response = await fetch(`${API_URL}/api/orders/${orderId}/attachment`);
+      const response = await fetch(`${API_URL}/api/orders/${orderId}/attachment`, {
+        credentials: 'include'
+      });
       
       if (!response.ok) {
         throw new Error('Failed to download attachment');
@@ -80,6 +88,10 @@ function ViewOrders({ onInventoryUpdate }) {
     try {
       const response = await fetch(`${API_URL}/api/orders/${orderId}/void`, {
         method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       
       if (!response.ok) {

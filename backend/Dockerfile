@@ -2,10 +2,11 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Install system dependencies including SQLite3 and curl for healthcheck
+# Install system dependencies including SQLite3, curl for healthcheck, and poppler for PDF processing
 RUN apt-get update && apt-get install -y \
     sqlite3 \
     curl \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

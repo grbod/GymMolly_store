@@ -17,7 +17,13 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
 
   const fetchExistingPOs = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/orders`);
+      const response = await fetch(`${API_URL}/api/orders`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch existing orders');
       }

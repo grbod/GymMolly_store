@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { Modal, Button } from 'react-bootstrap';
+import Login from './components/Login';
 import OrderForm from './components/OrderForm';
 import AddAddress from './components/AddAddress';
 import UpdateAddress from './components/UpdateAddress';
@@ -13,6 +14,8 @@ import ViewOrders from './components/ViewOrders';
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [formData, setFormData] = useState({
     po: '',
     address: null,
@@ -28,9 +31,38 @@ function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchAddresses();
-    fetchInventory();
+    const initializeApp = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/check-auth`, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await response.json();
+        
+        if (data.authenticated) {
+          setIsAuthenticated(true);
+          // Fetch addresses and inventory in parallel
+          await Promise.all([
+            fetchAddresses(),
+            fetchInventory()
+          ]);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        setIsAuthenticated(false);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+    
+    initializeApp();
   }, []);
+
 
   const fetchAddresses = async () => {
     try {
@@ -50,7 +82,6 @@ function App() {
 
   const fetchInventory = async () => {
     try {
-      setLoading(true);
       const response = await fetch(`${API_URL}/api/inventory`, {
         credentials: 'include',
         headers: {
@@ -137,6 +168,10 @@ function App() {
     try {
       const response = await fetch(`${API_URL}/api/shipping-addresses/${formData.address.id}`, {
         method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
       if (response.ok) {
@@ -203,11 +238,46 @@ function App() {
     }
   };
 
-  if (loading) return <div>Loading inventory data...</div>;
+  const handleLogin = (authenticated) => {
+    setIsAuthenticated(authenticated);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL}/api/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      setIsAuthenticated(false);
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
+  if (authLoading || loading) return <div>Loading...</div>;
+  
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
   if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="App container py-4 bg-light">
+      <div className="d-flex justify-content-end mb-3">
+        <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
+          Logout
+        </Button>
+      </div>
       <Routes>
         <Route path="/" element={
           <OrderForm 
