@@ -19,16 +19,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `cd frontend && npm install` - Install dependencies
 
 ### Backend (Flask)
-- `cd backend && python app.py` - Start development server (runs on localhost:5000)
+- `cd backend && python app.py` - Start development server (runs on localhost:5001)
 - `cd backend && python init_db.py` - Initialize database with tables
 - `cd backend && pip install -r requirements.txt` - Install dependencies
 - `cd backend && python -m venv venv && source venv/bin/activate` - Create and activate virtual environment (first time setup)
 
 ### Docker Deployment
-- `docker-compose up --build` - Build and start all services
-- `docker-compose down` - Stop all services
-- Production deployment runs on port 80 with Nginx reverse proxy
-- Services: `nginx` (reverse proxy), `frontend` (React), `backend` (Flask)
+
+**IMPORTANT**: Use the correct docker-compose file for your environment:
+- **Production VPS**: `docker-compose -f docker-compose.prod.yml up -d --build`
+- **Local Development**: `docker-compose -f docker-compose.local.yml up -d --build`
+- **Container-based Nginx**: `docker-compose -f docker-compose.containerized.yml up -d --build`
+
+**Production Deployment Commands:**
+- `docker-compose -f docker-compose.prod.yml up -d --build` - Build and start production services
+- `docker-compose -f docker-compose.prod.yml down` - Stop all services
+- `docker-compose -f docker-compose.prod.yml restart frontend` - Restart specific service
+- `docker-compose -f docker-compose.prod.yml logs backend` - View service logs
+
+**Production Architecture:**
+- **Frontend**: React app running on port 3001, served by internal nginx
+- **Backend**: Flask API running on port 5001
+- **Reverse Proxy**: External nginx on host system (port 80/443) proxies to containers
+- **SSL**: Let's Encrypt certificates with auto-renewal via certbot
 
 ## Architecture Overview
 
@@ -166,3 +179,124 @@ All API endpoints are prefixed with `/api` and defined in `backend/main.py`:
 - Python virtual environment should be created in `backend/venv/`
 - Environment files follow `.env.*` pattern and are gitignored
 - Frontend development server proxies API requests to backend (configured in package.json)
+
+## Production Deployment Troubleshooting
+
+This section documents common deployment issues and their solutions.
+
+### Database Issues
+
+**Problem**: Empty database/inventory after deployment
+**Solution**: Initialize database with sample data
+```bash
+docker-compose -f docker-compose.prod.yml exec backend python init_db.py
+```
+
+**Problem**: Database connection errors
+**Diagnosis**: Check if SQLite file exists and has proper permissions
+```bash
+docker-compose -f docker-compose.prod.yml exec backend ls -la /app/data/
+docker-compose -f docker-compose.prod.yml exec backend python -c "from main import app, db, Order; print('DB working:', Order.query.count())"
+```
+
+### SSL Certificate Issues
+
+**Problem**: "Failed to connect to server" with CORS errors
+**Root Cause**: Missing or incorrect SSL certificate for domain
+
+**Solution**: Create SSL certificate with Let's Encrypt
+```bash
+sudo certbot --nginx -d gymmolly.bodytools.work
+```
+
+**Auto-renewal verification**:
+```bash
+sudo certbot renew --dry-run
+sudo systemctl status certbot.timer
+```
+
+### CORS Configuration Issues
+
+**Problem**: Browser shows CORS errors in network tab
+**Root Cause**: CORS configuration missing HTTP/HTTPS origins or redirect issues
+
+**Solution**: Update CORS origins in `backend/main.py`:
+```python
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["https://gymmolly.bodytools.work", "http://gymmolly.bodytools.work", ...],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
+```
+
+### Frontend Build Issues
+
+**Problem**: Frontend using wrong API URL
+**Root Cause**: Frontend built with incorrect `REACT_APP_API_URL`
+
+**Solution**: Rebuild frontend with correct environment variable
+```bash
+docker-compose -f docker-compose.prod.yml build --build-arg REACT_APP_API_URL=https://gymmolly.bodytools.work frontend
+docker-compose -f docker-compose.prod.yml up -d frontend
+```
+
+### 502 Bad Gateway Errors
+
+**Problem**: Nginx returns 502 Bad Gateway
+**Root Cause**: Wrong docker-compose configuration or containers not running on expected ports
+
+**Solution**: Use correct production configuration
+```bash
+# Stop any existing containers
+docker-compose down
+# Start with production config
+docker-compose -f docker-compose.prod.yml up -d --build
+# Verify containers are running on correct ports
+docker-compose -f docker-compose.prod.yml ps
+```
+
+### Container Configuration
+
+**Docker Compose Files**:
+- `docker-compose.prod.yml` - **USE THIS for VPS production deployment**
+- `docker-compose.local.yml` - Local development with external nginx
+- `docker-compose.containerized.yml` - Fully containerized with nginx container
+
+**Port Mapping**:
+- Frontend: Port 3001 (internal nginx serves React build)
+- Backend: Port 5001 (Flask API)
+- External nginx proxies port 80/443 to these container ports
+
+### Common Verification Commands
+
+**Check container status**:
+```bash
+docker-compose -f docker-compose.prod.yml ps
+docker-compose -f docker-compose.prod.yml logs backend
+docker-compose -f docker-compose.prod.yml logs frontend
+```
+
+**Test API endpoints directly**:
+```bash
+curl https://gymmolly.bodytools.work/api/inventory
+curl -X POST https://gymmolly.bodytools.work/api/login -H "Content-Type: application/json" -d '{"password":"MIAMI"}'
+```
+
+**Check nginx configuration**:
+```bash
+sudo nginx -t
+sudo systemctl status nginx
+sudo systemctl reload nginx
+```
+
+### Build Cache Issues
+
+**Problem**: Changes not reflected after rebuild
+**Solution**: Clear Docker build cache
+```bash
+docker-compose -f docker-compose.prod.yml build --no-cache frontend
+docker system prune -f
+```

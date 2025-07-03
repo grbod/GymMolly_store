@@ -67,17 +67,17 @@ function OrderForm({
                 <p className="mb-1">{`${formData.address.city}, ${formData.address.state} ${formData.address.zipCode}`}</p>
                 <p className="mb-1">Phone: {formData.address.phone}</p>
                 <p className="mb-1">Email: {formData.address.email}</p>
-                <div className="mt-2 d-grid gap-2">
+                <div className="mt-2 d-flex gap-2">
                   <button 
                     type="button" 
-                    className="btn btn-outline-primary"
+                    className="btn btn-outline-primary btn-sm"
                     onClick={() => navigate(`/edit-address/${formData.address.id}`)}
                   >
                     Edit Address
                   </button>
                   <button 
                     type="button" 
-                    className="btn btn-danger"
+                    className="btn btn-danger btn-sm"
                     onClick={handleDeleteClick}
                   >
                     Delete Address

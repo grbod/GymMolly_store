@@ -57,7 +57,7 @@ Session(app)
 
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:3000", "http://localhost:3001", "http://localhost:5001", "https://64.176.218.24","http://64.176.218.24", "https://gymmolly.bodytools.work"],
+        "origins": ["http://localhost:3000", "http://localhost:3001", "http://localhost:5001", "https://64.176.218.24","http://64.176.218.24", "https://gymmolly.bodytools.work", "http://gymmolly.bodytools.work"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
