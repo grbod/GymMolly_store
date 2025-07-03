@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: 
+      context: ./frontend
+      args:
+        - REACT_APP_API_URL=http://gymmolly.bodytools.work
+    container_name: gymmolly_frontend
+    ports:
+      - "3001:80"  # Running on port 3001 to avoid conflicts
+    restart: unless-stopped
+    networks:
+      - gymmolly_network
+
+  backend:
+    build: ./backend
+    container_name: gymmolly_backend
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - SS_CLIENT_ID=${SS_CLIENT_ID}
+      - SS_CLIENT_SECRET=${SS_CLIENT_SECRET}
+      - SS_STORE_ID=${SS_STORE_ID}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - SENDER_EMAIL=${SENDER_EMAIL}
+      - RECIPIENT_EMAIL=${RECIPIENT_EMAIL}
+    volumes:
+      - ./data:/app/data  # Persistent database storage
+      - ./uploads:/app/uploads  # Persistent file uploads
+    ports:
+      - "5001:5000"  # Running on port 5001 to avoid conflicts
+    restart: unless-stopped
+    networks:
+      - gymmolly_network
+
+networks:
+  gymmolly_network:
+    driver: bridge
