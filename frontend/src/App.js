@@ -10,8 +10,9 @@ import UpdateAddress from './components/UpdateAddress';
 import UpdateInventory from './components/UpdateInventory';
 import OrderValidation from './components/OrderValidation';
 import ViewOrders from './components/ViewOrders';
+import ShippingLabels from './components/ShippingLabels';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -51,10 +52,12 @@ function App() {
           ]);
         } else {
           setIsAuthenticated(false);
+          setLoading(false); // Fix: Set loading to false when not authenticated
         }
       } catch (err) {
         console.error('Auth check failed:', err);
         setIsAuthenticated(false);
+        setLoading(false); // Fix: Set loading to false on error too
       } finally {
         setAuthLoading(false);
       }
@@ -99,7 +102,9 @@ function App() {
           size: item.size,
           flavor: item.flavor,
           unitsCs: item.unitsCs,
-          cases: 0
+          cases: 0,
+          dimensions: item.dimensions,
+          weight: item.weight
         }))
       }));
       setLoading(false);
@@ -150,8 +155,8 @@ function App() {
       return;
     }
     
-    // Navigate to order validation page
-    navigate('/order-validation');
+    // Navigate to shipping labels page
+    navigate('/shipping-labels');
   };
 
   const refreshAddresses = () => {
@@ -221,7 +226,9 @@ function App() {
         size: item.size,
         flavor: item.flavor,
         unitsCs: item.unitsCs,
-        cases: 0
+        cases: 0,
+        dimensions: item.dimensions,
+        weight: item.weight
       })),
       attachment: [],
       shippingMethod: 'FedEx Ground'
@@ -238,8 +245,19 @@ function App() {
     }
   };
 
-  const handleLogin = (authenticated) => {
+  const handleLogin = async (authenticated) => {
     setIsAuthenticated(authenticated);
+    if (authenticated) {
+      // Fetch data after successful login
+      try {
+        await Promise.all([
+          fetchAddresses(),
+          fetchInventory()
+        ]);
+      } catch (err) {
+        console.error('Failed to fetch data after login:', err);
+      }
+    }
   };
 
   const handleLogout = async () => {
@@ -289,6 +307,16 @@ function App() {
             handleSubmit={handleSubmit}
             handleDeleteClick={handleDeleteClick}
             handleFileUpload={handleFileUpload}
+          />
+        } />
+        <Route path="/add-address" element={<AddAddress onAddressAdded={refreshAddresses} />} />
+        <Route path="/edit-address/:id" element={<UpdateAddress onAddressUpdated={updateAddressInList} />} />
+        <Route path="/updateinventory" element={<UpdateInventory onInventoryUpdated={fetchInventory} />} />
+        <Route path="/shipping-labels" element={
+          <ShippingLabels 
+            formData={formData}
+            handleFileUpload={handleFileUpload}
+            handleInputChange={handleInputChange}
             shippingMethods={[
               'FedEx Ground',
               'FedEx 2Day',
@@ -296,9 +324,6 @@ function App() {
             ]}
           />
         } />
-        <Route path="/add-address" element={<AddAddress onAddressAdded={refreshAddresses} />} />
-        <Route path="/edit-address/:id" element={<UpdateAddress onAddressUpdated={updateAddressInList} />} />
-        <Route path="/updateinventory" element={<UpdateInventory onInventoryUpdated={fetchInventory} />} />
         <Route path="/order-validation" element={<OrderValidation orderData={formData} onConfirm={handleSubmit} onCancel={() => navigate('/')} onOrderSuccess={resetFormData} />} />
         <Route path="/vieworders" element={
           <ViewOrders 

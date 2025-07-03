@@ -14,15 +14,15 @@ def check_aspect_ratio(width, height):
         print(f"WRONG RATIO: {ratio:.1f}%")
     return ratio
 
-def combine_pngs_to_pdf(png_files, output_filename):
+def combine_pngs_to_pdf(image_files, output_filename):
     # Open the first image and convert it to RGB mode
-    images = [Image.open(png).convert('RGB') for png in png_files]
+    images = [Image.open(img).convert('RGB') for img in image_files]
     
-    # Print dimensions for each PNG
+    # Print dimensions for each image
     for i, img in enumerate(images):
         width_px, height_px = img.size
         width_in, height_in = get_size_inches(width_px, height_px)
-        print(f"Page {i+1} (PNG) dimensions: {width_in:.2f}\" x {height_in:.2f}\"")
+        print(f"Page {i+1} (Image) dimensions: {width_in:.2f}\" x {height_in:.2f}\"")
         check_aspect_ratio(width_px, height_px)
     
     # Save the first image as a PDF and append the rest
@@ -163,21 +163,22 @@ def process_files(input_dir, output_filename):
     # Get all files in the input directory
     files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
     
-    # Separate PNG and PDF files
-    png_files = [os.path.join(input_dir, f) for f in files if f.lower().endswith('.png')]
+    # Separate image and PDF files
+    image_files = [os.path.join(input_dir, f) for f in files 
+                   if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
     pdf_files = [os.path.join(input_dir, f) for f in files if f.lower().endswith('.pdf')]
     
     total_pages = 0
     
     # Process based on file type
-    if png_files:
-        total_pages = combine_pngs_to_pdf(png_files, output_filename)
-        print(f"Created PDF from {len(png_files)} PNG files with {total_pages} pages")
+    if image_files:
+        total_pages = combine_pngs_to_pdf(image_files, output_filename)
+        print(f"Created PDF from {len(image_files)} image files with {total_pages} pages")
     elif pdf_files:
         total_pages = combine_pdfs(pdf_files, output_filename)
         print(f"Combined {len(pdf_files)} PDF files with total {total_pages} pages")
     else:
-        print("No PNG or PDF files found in the specified directory")
+        print("No image (PNG/JPG/JPEG) or PDF files found in the specified directory")
         return total_pages
     
     # Print dimensions of output PDF

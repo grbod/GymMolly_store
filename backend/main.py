@@ -392,11 +392,26 @@ def delete_shipping_address(id):
 
 @app.route('/api/inventory', methods=['GET'])
 def get_inventory():
-    inventory = db.session.query(ItemDetail, InventoryQuantity).join(InventoryQuantity).all()
+    # Join ItemDetail with InventoryQuantity and ShippingDetail
+    inventory = db.session.query(ItemDetail, InventoryQuantity, ShippingDetail)\
+        .join(InventoryQuantity)\
+        .outerjoin(ShippingDetail, ItemDetail.sku == ShippingDetail.sku)\
+        .all()
     result = []
-    for item, quantity in inventory:
+    for item, quantity, shipping in inventory:
         item_dict = item.to_dict()
         item_dict['quantity'] = quantity.quantity
+        # Add shipping details if available
+        if shipping:
+            item_dict['dimensions'] = {
+                'length': shipping.length,
+                'width': shipping.width,
+                'height': shipping.height
+            }
+            item_dict['weight'] = shipping.weight
+        else:
+            item_dict['dimensions'] = None
+            item_dict['weight'] = None
         result.append(item_dict)
     return jsonify(result)
 

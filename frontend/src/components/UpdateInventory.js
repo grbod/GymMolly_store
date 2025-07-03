@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './UpdateInventory.css';  // Create this file if it doesn't exist
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 function UpdateInventory({ onInventoryUpdated }) {
     const [inventory, setInventory] = useState([]);

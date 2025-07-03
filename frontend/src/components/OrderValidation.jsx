@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './OrderValidation.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
   const navigate = useNavigate();
   const [existingPOs, setExistingPOs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [orderSubmitted, setOrderSubmitted] = useState(false);
 
   // Fetch existing POs when component mounts
   useEffect(() => {
@@ -25,11 +26,23 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
         }
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch existing orders');
+        const errorText = await response.text();
+        console.error('Failed to fetch orders:', response.status, errorText);
+        throw new Error(`Failed to fetch existing orders: ${response.status}`);
       }
       const orders = await response.json();
-      const pos = orders.map(order => order.purchase_order_number.toLowerCase());
-      setExistingPOs(pos);
+      console.log('Fetched orders:', orders);
+      
+      // Handle empty orders or different response structure
+      if (Array.isArray(orders)) {
+        const pos = orders
+          .filter(order => order.purchase_order_number)
+          .map(order => order.purchase_order_number.toLowerCase());
+        setExistingPOs(pos);
+      } else {
+        console.warn('Unexpected orders response format:', orders);
+        setExistingPOs([]);
+      }
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching POs:', error);
@@ -124,14 +137,9 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
       }
 
       // If successful
-      alert('Order submitted successfully!');
+      setOrderSubmitted(true);
       onOrderSuccess();
-      navigate('/');
-      
-      // Move this line after all operations are complete
-      setTimeout(() => {
-        document.body.classList.remove('loading-cursor');
-      }, 500);  // Add a small delay to ensure the cursor stays during navigation
+      document.body.classList.remove('loading-cursor');
       
     } catch (error) {
       console.error('Detailed error:', error);
@@ -157,6 +165,32 @@ function OrderValidation({ orderData, isSubmitting, onOrderSuccess }) {
         <button onClick={handleBack} className="cancel-button">
           Back to Order
         </button>
+      </div>
+    );
+  }
+
+  // Show success view if order was submitted
+  if (orderSubmitted) {
+    return (
+      <div className="validation-container">
+        <div className="text-center">
+          <h2 className="text-success mb-4">✓ Order Submitted Successfully!</h2>
+          <p className="mb-4">Your order has been submitted and will be processed shortly.</p>
+          <div className="button-group">
+            <button 
+              onClick={() => navigate('/vieworders')} 
+              className="btn btn-secondary"
+            >
+              View Order History
+            </button>
+            <button 
+              onClick={() => navigate('/')} 
+              className="btn btn-primary"
+            >
+              Return to Order Form
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

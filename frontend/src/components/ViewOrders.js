@@ -3,7 +3,7 @@ import './ViewOrders.css';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaFileExport, FaCalculator } from 'react-icons/fa';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 function ViewOrders({ onInventoryUpdate }) {
   const [orders, setOrders] = useState([]);

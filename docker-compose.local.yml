@@ -2,12 +2,15 @@ services:
   frontend:
     build: 
       context: ./frontend
+      dockerfile: Dockerfile.local
       args:
-        REACT_APP_API_URL: http://localhost:5001
+        REACT_APP_API_URL: http://localhost:3001
     ports:
       - "3001:80"
-    environment:
-      - REACT_APP_API_URL=http://localhost:5001
+    depends_on:
+      - backend
+    networks:
+      - app-network
     restart: unless-stopped
 
   backend:
@@ -28,6 +31,8 @@ services:
       - ./data:/app/data
       # Mount uploads directory for file attachments
       - ./uploads:/app/uploads
+    networks:
+      - app-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/inventory"]
       interval: 30s
@@ -35,3 +40,7 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
