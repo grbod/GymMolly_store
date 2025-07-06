@@ -424,6 +424,127 @@ def update_inventory(sku):
     db.session.commit()
     return jsonify(quantity.to_dict())
 
+# Product management endpoints
+@app.route('/api/products', methods=['GET'])
+def get_products():
+    try:
+        products = ItemDetail.query.all()
+        products_data = []
+        
+        for product in products:
+            product_dict = {
+                'sku': product.sku,
+                'product': product.product,
+                'size': product.size,
+                'flavor': product.flavor,
+                'unitsCs': product.unitsCs
+            }
+            
+            # Add inventory quantity if available
+            inventory = InventoryQuantity.query.get(product.sku)
+            if inventory:
+                product_dict['quantity'] = inventory.quantity
+            else:
+                product_dict['quantity'] = 0
+                
+            # Add shipping details if available
+            shipping = ShippingDetail.query.get(product.sku)
+            if shipping:
+                product_dict['shipping'] = {
+                    'length': shipping.length,
+                    'width': shipping.width,
+                    'height': shipping.height,
+                    'weight': shipping.weight
+                }
+                
+            products_data.append(product_dict)
+            
+        return jsonify(products_data), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/products', methods=['POST'])
+def create_product():
+    try:
+        data = request.json
+        
+        # Check if SKU already exists
+        existing_product = ItemDetail.query.get(data.get('sku'))
+        if existing_product:
+            return jsonify({"error": "Product with this SKU already exists"}), 400
+            
+        # Create new product
+        new_product = ItemDetail(
+            sku=data['sku'],
+            product=data['product'],
+            size=data['size'],
+            flavor=data['flavor'],
+            unitsCs=data['unitsCs']
+        )
+        db.session.add(new_product)
+        
+        # Create inventory entry
+        initial_quantity = data.get('quantity', 0)
+        new_inventory = InventoryQuantity(
+            sku=data['sku'],
+            quantity=initial_quantity
+        )
+        db.session.add(new_inventory)
+        
+        # Create shipping details if provided
+        if any(data.get(field) for field in ['length', 'width', 'height', 'weight']):
+            new_shipping = ShippingDetail(
+                sku=data['sku'],
+                length=float(data.get('length') or 0),
+                width=float(data.get('width') or 0),
+                height=float(data.get('height') or 0),
+                weight=float(data.get('weight') or 0)
+            )
+            db.session.add(new_shipping)
+            
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Product created successfully",
+            "sku": new_product.sku
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/api/products/<string:sku>', methods=['DELETE'])
+def delete_product(sku):
+    try:
+        # Check if product exists
+        product = ItemDetail.query.get(sku)
+        if not product:
+            return jsonify({"error": "Product not found"}), 404
+            
+        # Check if product has any orders
+        order_items = OrderItem.query.filter_by(product_sku=sku).first()
+        if order_items:
+            return jsonify({
+                "error": "Cannot delete product with existing orders. This product has been used in one or more orders."
+            }), 400
+            
+        # Delete related records first
+        InventoryQuantity.query.filter_by(sku=sku).delete()
+        ShippingDetail.query.filter_by(sku=sku).delete()
+        
+        # Delete the product
+        db.session.delete(product)
+        db.session.commit()
+        
+        return jsonify({
+            "message": f"Product {sku} deleted successfully"
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 # Add after the existing routes
 @app.route('/api/orders', methods=['POST'])
 def create_order():
@@ -717,6 +838,41 @@ def void_order(order_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
+
+# Add delete order endpoint
+@app.route('/api/orders/<int:order_id>/delete', methods=['DELETE'])
+def delete_order(order_id):
+    try:
+        order = db.session.get(Order, order_id)
+        if not order:
+            return jsonify({"error": "Order not found"}), 404
+        
+        # Only allow deletion of test orders (Processing or Voided status)
+        if order.order_status not in ['Processing', 'Voided']:
+            return jsonify({
+                "error": f"Cannot delete order in {order.order_status} status. Only Processing or Voided orders can be deleted."
+            }), 400
+        
+        # Start transaction
+        db.session.begin_nested()
+        
+        try:
+            # Delete order items first (foreign key constraint)
+            OrderItem.query.filter_by(order_id=order_id).delete()
+            
+            # Delete the order
+            db.session.delete(order)
+            db.session.commit()
+            
+            return jsonify({"message": f"Order {order.purchase_order_number} deleted successfully"}), 200
+            
+        except Exception as e:
+            db.session.rollback()
+            raise e
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 # Add shipping webhook endpoint
 @app.route('/api/webhooks/shipping', methods=['POST'])

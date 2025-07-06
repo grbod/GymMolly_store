@@ -1,0 +1,308 @@
+.delete-orders-container {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.delete-orders-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.delete-orders-header h2 {
+  margin: 0;
+  color: #1a237e;
+  font-size: 20px;
+}
+
+.back-button {
+  padding: 6px 12px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
+.warning-banner {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 8px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.warning-banner strong {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.filters-section {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 300px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 6px 12px;
+  font-size: 13px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.status-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-filter label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #5f6368;
+  white-space: nowrap;
+}
+
+.status-filter select {
+  padding: 6px 12px;
+  font-size: 13px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  min-width: 130px;
+}
+
+.status-filter select:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.orders-list {
+  display: grid;
+  gap: 8px;
+}
+
+.no-orders {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9e9e9e;
+  font-size: 16px;
+  background-color: #f5f5f7;
+  border-radius: 8px;
+}
+
+.order-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.order-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.order-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.order-main-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.order-main-info h4 {
+  margin: 0;
+  color: #1a237e;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-processing {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.status-voided {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-shipped {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.order-date {
+  color: #5f6368;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.order-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.company-name {
+  font-weight: 500;
+  color: #1d1d1f;
+  margin: 0;
+  font-size: 13px;
+}
+
+.order-summary {
+  color: #5f6368;
+  margin: 0;
+  font-size: 11px;
+}
+
+.order-items-preview {
+  display: none;
+}
+
+.item-preview {
+  background-color: #f5f5f7;
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: #5f6368;
+}
+
+.more-items {
+  color: #9e9e9e;
+  font-style: italic;
+  padding: 4px 10px;
+}
+
+.order-actions {
+  display: flex;
+  align-items: center;
+}
+
+.delete-order-button {
+  padding: 4px 12px;
+  background-color: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.delete-order-button:hover {
+  background-color: #b71c1c;
+}
+
+.delete-order-button svg {
+  font-size: 12px;
+}
+
+.cannot-delete-message {
+  color: #9e9e9e;
+  font-size: 11px;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #5f6368;
+  font-size: 16px;
+}
+
+.alert {
+  padding: 12px 20px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.alert-danger {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .delete-orders-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filters-section {
+    flex-direction: column;
+  }
+
+  .search-box {
+    min-width: 100%;
+  }
+
+  .order-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .order-main-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

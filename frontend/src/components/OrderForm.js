@@ -17,7 +17,7 @@ function OrderForm({
     <div className="card shadow-sm bg-white">
       <div className="card-body">
         <div className="d-flex justify-content-between align-items-start mb-4">
-          <h1 className="text-primary">G.M. Store</h1>
+          <h1 className="text-primary">Gym Molly Store</h1>
           <img 
             src={process.env.PUBLIC_URL + '/GymMollyLogo.jpg'} 
             alt="Gym Molly Logo" 
@@ -106,7 +106,15 @@ function OrderForm({
                 </tr>
               </thead>
               <tbody>
-                {formData.products.map((product) => (
+                {formData.products
+                  .sort((a, b) => {
+                    // First sort by product name
+                    const productCompare = a.product.localeCompare(b.product);
+                    if (productCompare !== 0) return productCompare;
+                    // If products are the same, sort by flavor
+                    return a.flavor.localeCompare(b.flavor);
+                  })
+                  .map((product) => (
                   <tr key={product.sku}>
                     <td>{product.product}</td>
                     <td>{product.size}</td>

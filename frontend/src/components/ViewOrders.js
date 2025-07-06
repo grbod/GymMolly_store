@@ -352,7 +352,7 @@ function ViewOrders({ onInventoryUpdate }) {
                     {order.has_attachment ? (
                       <button
                         onClick={() => handleDownloadAttachment(order.order_id, order.purchase_order_number)}
-                        className="action-button download-button"
+                        className="table-action-button download-button"
                       >
                         Download Labels
                       </button>
@@ -367,7 +367,7 @@ function ViewOrders({ onInventoryUpdate }) {
                   </td>
                   <td>
                     <button
-                      className="action-button void-button"
+                      className="table-action-button void-button"
                       onClick={() => handleVoidOrder(order.order_id)}
                       disabled={order.order_status !== 'Processing'}
                     >
@@ -386,7 +386,7 @@ function ViewOrders({ onInventoryUpdate }) {
             onClick={() => {
               const password = prompt("Please enter the admin password:");
               if (password === 'GREGS') {
-                navigate('/updateinventory');
+                navigate('/inventory-settings');
               } else if (password !== null) {
                 alert('Incorrect password.');
               }

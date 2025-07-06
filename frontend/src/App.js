@@ -11,6 +11,10 @@ import UpdateInventory from './components/UpdateInventory';
 import OrderValidation from './components/OrderValidation';
 import ViewOrders from './components/ViewOrders';
 import ShippingLabels from './components/ShippingLabels';
+import InventorySettings from './components/InventorySettings';
+import AddProduct from './components/AddProduct';
+import RemoveProduct from './components/RemoveProduct';
+import DeleteOrders from './components/DeleteOrders';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
@@ -292,9 +296,12 @@ function App() {
   return (
     <div className="App container py-4 bg-light">
       <div className="d-flex justify-content-end mb-3">
-        <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
+        <button 
+          className="logout-button"
+          onClick={handleLogout}
+        >
           Logout
-        </Button>
+        </button>
       </div>
       <Routes>
         <Route path="/" element={
@@ -311,7 +318,11 @@ function App() {
         } />
         <Route path="/add-address" element={<AddAddress onAddressAdded={refreshAddresses} />} />
         <Route path="/edit-address/:id" element={<UpdateAddress onAddressUpdated={updateAddressInList} />} />
+        <Route path="/inventory-settings" element={<InventorySettings />} />
         <Route path="/updateinventory" element={<UpdateInventory onInventoryUpdated={fetchInventory} />} />
+        <Route path="/add-product" element={<AddProduct onProductAdded={fetchInventory} />} />
+        <Route path="/remove-product" element={<RemoveProduct onProductRemoved={fetchInventory} />} />
+        <Route path="/delete-orders" element={<DeleteOrders onOrderDeleted={fetchInventory} />} />
         <Route path="/shipping-labels" element={
           <ShippingLabels 
             formData={formData}
