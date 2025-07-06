@@ -167,7 +167,39 @@ def process_files(input_dir, output_filename):
     total_pages = 0
     
     # Process based on file type
-    if image_files:
+    if image_files and pdf_files:
+        # Handle mixed file types: convert images to PDFs first, then combine all
+        import tempfile
+        temp_pdfs = []
+        
+        # Convert each image to a temporary PDF
+        for img_file in image_files:
+            temp_pdf = os.path.join(input_dir, f"temp_{os.path.basename(img_file)}.pdf")
+            img = Image.open(img_file).convert('RGB')
+            
+            # Print dimensions
+            width_px, height_px = img.size
+            width_in, height_in = get_size_inches(width_px, height_px, dpi=300)
+            print(f"Converting image {os.path.basename(img_file)}: {width_in:.2f}\" x {height_in:.2f}\"")
+            check_aspect_ratio(width_px, height_px)
+            
+            # Save as PDF with 300 DPI
+            img.save(temp_pdf, resolution=300.0)
+            temp_pdfs.append(temp_pdf)
+        
+        # Combine all PDFs (original + converted images)
+        all_pdfs = pdf_files + temp_pdfs
+        total_pages = combine_pdfs(all_pdfs, output_filename)
+        
+        # Clean up temporary PDFs
+        for temp_pdf in temp_pdfs:
+            try:
+                os.remove(temp_pdf)
+            except:
+                pass
+                
+        print(f"Combined {len(image_files)} image files and {len(pdf_files)} PDF files into {total_pages} pages")
+    elif image_files:
         total_pages = combine_pngs_to_pdf(image_files, output_filename)
         print(f"Created PDF from {len(image_files)} image files with {total_pages} pages")
     elif pdf_files:

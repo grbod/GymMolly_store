@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './ViewOrders.css';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaFileExport, FaCalculator } from 'react-icons/fa';
+import { FaArrowLeft, FaFileExport, FaCalculator, FaCog } from 'react-icons/fa';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
@@ -381,6 +381,20 @@ function ViewOrders({ onInventoryUpdate }) {
       </div>
       <div className="pagination-controls">
         <div className="pagination-info">
+          <button 
+            className="gear-button"
+            onClick={() => {
+              const password = prompt("Please enter the admin password:");
+              if (password === 'GREGS') {
+                navigate('/updateinventory');
+              } else if (password !== null) {
+                alert('Incorrect password.');
+              }
+            }}
+            title="Inventory Management"
+          >
+            <FaCog />
+          </button>
           Showing {startIndex + 1}-{Math.min(endIndex, orders.length)} of {orders.length} orders
         </div>
         <div className="pagination-actions">

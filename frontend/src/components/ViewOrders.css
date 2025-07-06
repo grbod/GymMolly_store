@@ -388,6 +388,26 @@ button {
 .pagination-info {
   color: #5f6368;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gear-button {
+  background: none;
+  border: none;
+  color: #5f6368;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.gear-button:hover {
+  color: #1976d2;
 }
 
 .pagination-actions {
