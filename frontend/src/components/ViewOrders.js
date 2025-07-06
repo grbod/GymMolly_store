@@ -9,6 +9,8 @@ function ViewOrders({ onInventoryUpdate }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const navigate = useNavigate();
 
@@ -115,6 +117,7 @@ function ViewOrders({ onInventoryUpdate }) {
     try {
       // Create simplified CSV content for billing
       const headers = [
+        'Order_Date',
         'Order_Number',
         'Store_Name',
         'Total_Cases',
@@ -122,17 +125,20 @@ function ViewOrders({ onInventoryUpdate }) {
         'Shipping_Method'
       ];
 
-      // Group by order and sum total cases
-      const billingRows = orders.map(order => {
-        const totalCases = order.items.reduce((sum, item) => sum + item.quantity, 0);
-        return [
-          order.purchase_order_number,
-          order.shipping_address.companyName,
-          totalCases,
-          order.order_status || 'Processing',
-          order.shipping_method || 'Not specified'
-        ];
-      });
+      // Filter out voided orders and group by order to sum total cases
+      const billingRows = orders
+        .filter(order => order.order_status !== 'Voided')
+        .map(order => {
+          const totalCases = order.items.reduce((sum, item) => sum + item.quantity, 0);
+          return [
+            new Date(order.created_at).toLocaleDateString(),
+            order.purchase_order_number,
+            order.shipping_address.companyName,
+            totalCases,
+            order.order_status || 'Processing',
+            order.shipping_method || 'Not specified'
+          ];
+        });
 
       // Convert to CSV
       const csvContent = [
@@ -231,6 +237,27 @@ function ViewOrders({ onInventoryUpdate }) {
     }
   };
 
+  // Calculate pagination
+  const totalPages = Math.ceil(orders.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedOrders = orders.slice(startIndex, endIndex);
+
+  // Handle page size change
+  const handlePageSizeChange = (e) => {
+    setPageSize(Number(e.target.value));
+    setCurrentPage(1); // Reset to first page
+  };
+
+  // Handle page navigation
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+  };
+
   if (loading) return <div>Loading orders...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -278,7 +305,7 @@ function ViewOrders({ onInventoryUpdate }) {
             </tr>
           </thead>
           <tbody>
-            {orders
+            {paginatedOrders
               .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
               .map((order) => (
                 <tr key={order.order_id} className="order-row">
@@ -351,6 +378,44 @@ function ViewOrders({ onInventoryUpdate }) {
               ))}
           </tbody>
         </table>
+      </div>
+      <div className="pagination-controls">
+        <div className="pagination-info">
+          Showing {startIndex + 1}-{Math.min(endIndex, orders.length)} of {orders.length} orders
+        </div>
+        <div className="pagination-actions">
+          <div className="page-size-selector">
+            <label htmlFor="page-size">Show:</label>
+            <select 
+              id="page-size"
+              value={pageSize} 
+              onChange={handlePageSizeChange}
+              className="page-size-select"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+          </div>
+          <div className="page-navigation">
+            <button 
+              className="pagination-button" 
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            <span className="page-info">
+              Page {currentPage} of {totalPages || 1}
+            </span>
+            <button 
+              className="pagination-button" 
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

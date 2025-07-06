@@ -3,7 +3,7 @@ from PIL import Image, ImageChops
 from PyPDF2 import PdfReader, PdfWriter
 import io
 
-def get_size_inches(width_px, height_px, dpi=96):
+def get_size_inches(width_px, height_px, dpi=300):
     """Convert pixels to inches based on DPI"""
     return width_px / dpi, height_px / dpi
 
@@ -21,16 +21,16 @@ def combine_pngs_to_pdf(image_files, output_filename):
     # Print dimensions for each image
     for i, img in enumerate(images):
         width_px, height_px = img.size
-        width_in, height_in = get_size_inches(width_px, height_px)
+        width_in, height_in = get_size_inches(width_px, height_px, dpi=300)
         print(f"Page {i+1} (Image) dimensions: {width_in:.2f}\" x {height_in:.2f}\"")
         check_aspect_ratio(width_px, height_px)
     
     # Save the first image as a PDF and append the rest
-    # Set DPI to 96 to match the input assumption
+    # Set DPI to 300 for high quality output
     images[0].save(output_filename, 
                   save_all=True, 
                   append_images=images[1:],
-                  resolution=96.0)  # This sets the DPI for the PDF output
+                  resolution=300.0)  # This sets the DPI for the PDF output
     
     return len(images)
 
@@ -121,12 +121,8 @@ def trim_pdf_margins(input_pdf, output_pdf):
         temp_writer.write(page_bytes)
         page_bytes.seek(0)
         
-        # Convert to image with specific DPI to match original size
-        original_width_pt = float(page.mediabox.width)
-        target_width_px = int(original_width_pt * 96 / 72)  # Convert from points to pixels at 96 DPI
-        dpi = int(target_width_px * 72 / original_width_pt)  # Calculate required DPI
-        
-        pil_image = convert_from_bytes(page_bytes.getvalue(), dpi=dpi)[0]
+        # Convert to image with high DPI for quality preservation
+        pil_image = convert_from_bytes(page_bytes.getvalue(), dpi=300)[0]
         
         # Trim white margins
         bg = Image.new(pil_image.mode, pil_image.size, 'white')
@@ -140,9 +136,9 @@ def trim_pdf_margins(input_pdf, output_pdf):
         # Add padding to maintain 66.7% ratio
         final_image = add_padding_for_ratio(trimmed_image, 66.7)
             
-        # Convert back to PDF with correct DPI
+        # Convert back to PDF with high DPI
         pdf_bytes = io.BytesIO()
-        final_image.save(pdf_bytes, format='PDF', resolution=dpi)
+        final_image.save(pdf_bytes, format='PDF', resolution=300)
         pdf_bytes.seek(0)
         
         # Add to writer

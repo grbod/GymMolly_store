@@ -10,6 +10,7 @@ from pathlib import Path
 from datetime import datetime
 import io
 import tempfile
+import zipfile
 from functools import wraps
 
 # Load environment variables ONCE
@@ -445,23 +446,40 @@ def create_order():
 
         # Process and handle file attachments
         pdf_data = None
+        zip_data = None
         if 'attachment' in request.files:
             files = request.files.getlist('attachment')
             if files:
                 with tempfile.TemporaryDirectory() as temp_dir:
                     # Save uploaded files
+                    saved_files = []
                     for file in files:
                         file_path = os.path.join(temp_dir, file.filename)
                         file.save(file_path)
+                        saved_files.append((file_path, file.filename))
+                    
+                    # Create zip file of original files
+                    zip_buffer = io.BytesIO()
+                    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                        for file_path, original_name in saved_files:
+                            zip_file.write(file_path, original_name)
+                    zip_data = zip_buffer.getvalue()
                     
                     # Process the files
                     output_path = os.path.join(temp_dir, "processed_labels.pdf")
                     process_files(temp_dir, output_path)
                     
-                    # Read the processed file
-                    with open(output_path, 'rb') as f:
-                        pdf_data = f.read()
-                        new_order.attachment = pdf_data  # Save to database
+                    # Try to read the trimmed version first
+                    trimmed_path = output_path.replace('.pdf', '_trimmed.pdf')
+                    if os.path.exists(trimmed_path):
+                        with open(trimmed_path, 'rb') as f:
+                            pdf_data = f.read()
+                    else:
+                        # Fall back to original if trimmed doesn't exist
+                        with open(output_path, 'rb') as f:
+                            pdf_data = f.read()
+                    
+                    new_order.attachment = pdf_data  # Save to database
 
         db.session.add(new_order)
         db.session.flush()  # Get the order ID
@@ -515,13 +533,14 @@ def create_order():
         # Create item_details dictionary
         item_details = {item.sku: item for item in ItemDetail.query.all()}
 
-        # Send confirmation email with PDF attachment
+        # Send confirmation email with PDF and ZIP attachments
         try:
             send_order_confirmation_email(
                 new_order,
                 shipping_address,
                 email_items,
-                pdf_data
+                pdf_data,
+                zip_data
             )
         except Exception as e:
             print(f"Email error details: {str(e)}")
@@ -628,9 +647,17 @@ def process_shipping_labels():
             try:
                 total_pages = process_files(temp_dir, output_path)
                 
-                # Read the processed file
-                with open(output_path, 'rb') as f:
-                    processed_content = f.read()
+                # Try to read the trimmed version first
+                trimmed_path = output_path.replace('.pdf', '_trimmed.pdf')
+                if os.path.exists(trimmed_path):
+                    with open(trimmed_path, 'rb') as f:
+                        processed_content = f.read()
+                    print(f"Using trimmed PDF: {trimmed_path}")
+                else:
+                    # Fall back to original if trimmed doesn't exist
+                    with open(output_path, 'rb') as f:
+                        processed_content = f.read()
+                    print(f"Trimmed PDF not found, using original: {output_path}")
             except Exception as process_error:
                 print(f"Label processing failed: {process_error}")
                 # If processing fails, just use the original files

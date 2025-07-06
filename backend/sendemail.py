@@ -15,7 +15,7 @@ SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
 SENDER_EMAIL = os.getenv('SENDER_EMAIL')
 RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL')
 
-def send_order_confirmation_email(order, shipping_address, items, pdf_data=None):
+def send_order_confirmation_email(order, shipping_address, items, pdf_data=None, zip_data=None):
     try:
         # Add debug logging
         print(f"Attempting to send email with SendGrid API key: {SENDGRID_API_KEY[:10]}...")
@@ -67,6 +67,26 @@ def send_order_confirmation_email(order, shipping_address, items, pdf_data=None)
             except Exception as e:
                 print(f"Error processing attachment: {str(e)}")
                 # Continue without attachment if there's an error
+
+        # Add ZIP attachment if provided
+        if zip_data:
+            try:
+                # Convert binary ZIP data to base64
+                encoded_zip = base64.b64encode(zip_data).decode()
+                
+                # Create ZIP attachment
+                zip_attachment = Attachment()
+                zip_attachment.file_content = FileContent(encoded_zip)
+                zip_attachment.file_type = FileType('application/zip')
+                zip_attachment.file_name = FileName(f'original_labels_PO_{order.purchase_order_number}.zip')
+                zip_attachment.disposition = Disposition('attachment')
+                zip_attachment.content_id = ContentId('Original Labels')
+                
+                # Add ZIP attachment to email
+                message.add_attachment(zip_attachment)
+            except Exception as e:
+                print(f"Error processing ZIP attachment: {str(e)}")
+                # Continue without ZIP attachment if there's an error
 
         try:
             response = sg.send(message)
