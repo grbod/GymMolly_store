@@ -46,3 +46,10 @@ data/
 
 # Flask session files
 backend/flask_session/
+
+# MCP and scripts
+mcp-server-ssh
+setup-mcp-ssh.sh
+
+# Node modules in root (playwright)
+node_modules/
