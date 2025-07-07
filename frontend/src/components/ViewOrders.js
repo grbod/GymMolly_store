@@ -271,7 +271,7 @@ function ViewOrders({ onInventoryUpdate }) {
               className="action-button back-button"
               onClick={() => navigate('/')}
             >
-              <FaArrowLeft className="button-icon" /> Back to Order Form
+              <FaArrowLeft className="button-icon" /> Order Form
             </button>
             
             <button 

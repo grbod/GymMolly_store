@@ -12,6 +12,35 @@ function ShippingLabels({
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (acceptedFiles) => {
+      // Check if we already have files
+      if (formData.attachment && formData.attachment.length > 0) {
+        // Get the file type of existing files
+        const existingType = formData.attachment[0].type.startsWith('image/') ? 'image' : 'pdf';
+        
+        // Check if new files match the existing type
+        const invalidFiles = acceptedFiles.filter(file => {
+          const newType = file.type.startsWith('image/') ? 'image' : 'pdf';
+          return newType !== existingType;
+        });
+        
+        if (invalidFiles.length > 0) {
+          alert('All files must be the same type. You cannot mix PDF and image files. Please remove existing files first if you want to switch file types.');
+          return;
+        }
+      } else if (acceptedFiles.length > 1) {
+        // Check if all new files are the same type
+        const firstType = acceptedFiles[0].type.startsWith('image/') ? 'image' : 'pdf';
+        const mixedTypes = acceptedFiles.some(file => {
+          const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
+          return fileType !== firstType;
+        });
+        
+        if (mixedTypes) {
+          alert('All files must be the same type. Please upload either all PDFs or all images (PNG/JPG).');
+          return;
+        }
+      }
+      
       const updatedFiles = formData.attachment 
         ? [...formData.attachment, ...acceptedFiles]
         : acceptedFiles;

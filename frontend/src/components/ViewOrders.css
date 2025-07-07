@@ -80,6 +80,11 @@
   vertical-align: top;
 }
 
+/* Reduce top padding for items column */
+.orders-table td:nth-child(4) {
+  padding-top: 2px;
+}
+
 /* Column widths - responsive */
 .orders-table th:nth-child(1),
 .orders-table td:nth-child(1) {
@@ -164,7 +169,7 @@
 .items-table-container {
   background: #f8f9fa;
   border-radius: 4px;
-  padding: 6px;
+  padding: 0px 6px 6px 6px;
   width: 100%;
   max-width: 500px;
 }
@@ -178,9 +183,14 @@
 
 .items-table th,
 .items-table td {
-  padding: 6px 8px;
+  padding: 5px 8px;
   border-bottom: 1px solid #e0e0e0;
   font-size: 11px;
+}
+
+.items-table th {
+  padding-top: 0px;
+  padding-bottom: 3px;
 }
 
 .items-table th {
@@ -229,7 +239,7 @@
   padding: 10px 20px;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -348,6 +358,7 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 16px !important;
 }
 
 .back-button:hover {

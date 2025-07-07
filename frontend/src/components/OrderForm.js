@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { FaArrowRight } from 'react-icons/fa';
+import './OrderForm.css';
 
 function OrderForm({ 
   formData, 
@@ -70,7 +72,7 @@ function OrderForm({
                 <div className="mt-2 d-flex gap-2">
                   <button 
                     type="button" 
-                    className="btn btn-outline-primary btn-sm"
+                    className="btn btn-sm address-edit-button"
                     onClick={() => navigate(`/edit-address/${formData.address.id}`)}
                   >
                     Edit Address
@@ -88,7 +90,7 @@ function OrderForm({
           )}
 
           <div className="mb-3">
-            <Link to="/add-address" className="btn btn-outline-primary btn-sm">
+            <Link to="/add-address" className="btn btn-sm address-add-button">
               <i className="bi bi-plus-circle me-1"></i>Add New Address
             </Link>
           </div>
@@ -149,16 +151,9 @@ function OrderForm({
             
             <button 
               type="submit" 
-              className="btn btn-lg" 
-              style={{ 
-                backgroundColor: '#B2CFEC',
-                color: 'black',
-                border: 'none',
-                paddingLeft: '3rem',
-                paddingRight: '3rem'
-              }}
+              className="btn btn-secondary next-button"
             >
-              Next
+              Next <FaArrowRight />
             </button>
           </div>
         </form>
