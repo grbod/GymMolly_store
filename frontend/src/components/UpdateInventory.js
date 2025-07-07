@@ -113,13 +113,6 @@ function UpdateInventory({ onInventoryUpdated }) {
             </table>
             <div className="button-container">
                 <button 
-                    className="submit-button"
-                    onClick={submitChanges}
-                    disabled={!hasChanges}
-                >
-                    Submit Changes
-                </button>
-                <button 
                     className="back-button"
                     onClick={() => {
                         if (hasChanges) {
@@ -132,6 +125,13 @@ function UpdateInventory({ onInventoryUpdated }) {
                     }}
                 >
                     Back to Order Form
+                </button>
+                <button 
+                    className="submit-button"
+                    onClick={submitChanges}
+                    disabled={!hasChanges}
+                >
+                    Submit Changes
                 </button>
             </div>
         </div>

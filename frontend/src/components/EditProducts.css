@@ -1,0 +1,178 @@
+.edit-products-container {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.edit-products-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.edit-products-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.spreadsheet-info {
+  background-color: #e9ecef;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.spreadsheet-info p {
+  margin: 0;
+  color: #495057;
+}
+
+.spreadsheet-container {
+  overflow-x: auto;
+  margin-bottom: 2rem;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+/* Custom spreadsheet styles */
+.custom-spreadsheet {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.custom-spreadsheet td.cell {
+  border: 1px solid #dee2e6;
+  padding: 8px;
+  min-width: 100px;
+  position: relative;
+}
+
+/* Header row styling */
+.custom-spreadsheet tr:first-child td.cell {
+  background-color: #495057;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* SKU column (first column) styling */
+.custom-spreadsheet td.cell:first-child {
+  background-color: #e9ecef;
+  font-weight: 500;
+}
+
+/* Read-only cells */
+.custom-spreadsheet td.cell.read-only {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+/* Selected cell */
+.custom-spreadsheet td.cell.selected {
+  box-shadow: inset 0 0 0 2px #007bff;
+}
+
+/* Editing cell */
+.custom-spreadsheet td.cell.editing {
+  padding: 0;
+}
+
+.custom-spreadsheet td.cell input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 8px;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+/* Numeric columns (dimensions and weight) */
+.custom-spreadsheet td.cell:nth-child(6),
+.custom-spreadsheet td.cell:nth-child(7),
+.custom-spreadsheet td.cell:nth-child(8),
+.custom-spreadsheet td.cell:nth-child(9) {
+  text-align: right;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.action-buttons button {
+  min-width: 140px;
+}
+
+/* Alert styling */
+.alert {
+  margin-bottom: 1rem;
+}
+
+/* Modal styling */
+.modal-footer {
+  justify-content: space-between;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .edit-products-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .custom-spreadsheet td.cell {
+    min-width: 80px;
+    font-size: 0.875rem;
+    padding: 6px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .action-buttons button {
+    width: 100%;
+  }
+}
+
+/* Hover effects for editable cells */
+.custom-spreadsheet tr:not(:first-child) td.cell:not(:first-child):not(.read-only):hover {
+  background-color: #f0f8ff;
+  cursor: pointer;
+}
+
+/* Changed cell indicator */
+.custom-spreadsheet td.cell.changed {
+  background-color: #fff3cd;
+}

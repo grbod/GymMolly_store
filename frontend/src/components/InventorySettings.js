@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaBoxes, FaPlus, FaTrash, FaArrowLeft } from 'react-icons/fa';
+import { FaBoxes, FaPlus, FaTrash, FaArrowLeft, FaEdit, FaDatabase } from 'react-icons/fa';
 import './InventorySettings.css';
 
 function InventorySettings() {
@@ -48,11 +48,29 @@ function InventorySettings() {
 
         <div 
           className="settings-card"
+          onClick={() => navigate('/edit-products')}
+        >
+          <FaEdit className="card-icon" />
+          <h3>Edit Product Details</h3>
+          <p>Edit product names, sizes, flavors, and shipping dimensions</p>
+        </div>
+
+        <div 
+          className="settings-card"
           onClick={() => navigate('/delete-orders')}
         >
           <FaTrash className="card-icon" style={{ color: '#d32f2f' }} />
           <h3>Delete Test Orders</h3>
           <p>Permanently remove test orders from the system (admin only)</p>
+        </div>
+
+        <div 
+          className="settings-card"
+          onClick={() => navigate('/backup-database')}
+        >
+          <FaDatabase className="card-icon" style={{ color: '#17a2b8' }} />
+          <h3>Backup Database</h3>
+          <p>Email database backup to admin</p>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ from flask import request, jsonify, session, send_file
 import requests
 import json
 import traceback
+import base64
 from base64 import b64encode
 import logging
 from pathlib import Path
@@ -901,6 +902,89 @@ def shipping_webhook():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+# Product management endpoints with full details
+@app.route('/api/products/full-details', methods=['GET'])
+@login_required
+def get_products_full_details():
+    """Get all products with their shipping details for editing"""
+    try:
+        # Query products with their shipping details using a join
+        products = db.session.query(ItemDetail, ShippingDetail)\
+            .join(ShippingDetail, ItemDetail.sku == ShippingDetail.sku)\
+            .all()
+        
+        result = []
+        for item, shipping in products:
+            result.append({
+                'sku': item.sku,
+                'product': item.product,
+                'size': item.size,
+                'flavor': item.flavor,
+                'unitsCs': item.unitsCs,
+                'length': shipping.length,
+                'width': shipping.width,
+                'height': shipping.height,
+                'weight': shipping.weight
+            })
+        
+        return jsonify(result), 200
+    except Exception as e:
+        print(f"Error fetching product details: {e}")
+        return jsonify({'error': 'Failed to fetch product details'}), 500
+
+@app.route('/api/products/bulk-update', methods=['PUT'])
+@login_required
+def bulk_update_products():
+    """Update multiple products with password verification"""
+    try:
+        data = request.json
+        password = data.get('password')
+        products = data.get('products', [])
+        
+        # Verify password
+        if password != 'GREGS':
+            return jsonify({'error': 'Invalid password'}), 401
+        
+        # Validate products data
+        if not products:
+            return jsonify({'error': 'No products provided'}), 400
+        
+        # Update each product
+        for product_data in products:
+            sku = product_data.get('sku')
+            if not sku:
+                continue
+            
+            # Update ItemDetail
+            item = ItemDetail.query.get(sku)
+            if item:
+                item.product = product_data.get('product', item.product)
+                item.size = product_data.get('size', item.size)
+                item.flavor = product_data.get('flavor', item.flavor)
+                item.unitsCs = product_data.get('unitsCs', item.unitsCs)
+            
+            # Update ShippingDetail
+            shipping = ShippingDetail.query.get(sku)
+            if shipping:
+                # Validate numeric fields
+                try:
+                    shipping.length = float(product_data.get('length', shipping.length))
+                    shipping.width = float(product_data.get('width', shipping.width))
+                    shipping.height = float(product_data.get('height', shipping.height))
+                    shipping.weight = float(product_data.get('weight', shipping.weight))
+                except ValueError as ve:
+                    return jsonify({'error': f'Invalid numeric value for SKU {sku}: {str(ve)}'}), 400
+        
+        # Commit all changes
+        db.session.commit()
+        
+        return jsonify({'message': f'Successfully updated {len(products)} products'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating products: {e}")
+        return jsonify({'error': 'Failed to update products'}), 500
+
 @app.route('/api/webhooks/shipstation', methods=['POST'])
 def shipstation_webhook():
     print("\n=== WEBHOOK ENDPOINT HIT ===")
@@ -986,6 +1070,178 @@ def shipstation_webhook():
         logging.error(error_msg)
         traceback.print_exc()
         return jsonify({"error": error_msg}), 500
+
+# Database backup endpoints
+@app.route('/api/database-info', methods=['GET'])
+@login_required
+def get_database_info():
+    """Get database file information including size and estimated zip size"""
+    try:
+        # Extract database path from URI
+        db_uri = app.config['SQLALCHEMY_DATABASE_URI']
+        if db_uri.startswith('sqlite:///'):
+            db_path = db_uri.replace('sqlite:///', '')
+            # Handle relative paths
+            if not os.path.isabs(db_path):
+                db_path = os.path.join(app.root_path, db_path)
+        else:
+            return jsonify({'error': 'Only SQLite databases are supported for backup'}), 400
+        
+        if not os.path.exists(db_path):
+            return jsonify({'error': 'Database file not found'}), 404
+        
+        # Get file size
+        size_bytes = os.path.getsize(db_path)
+        
+        # SQLite databases typically compress to 15-25% of original size
+        # Using 20% as a reasonable estimate
+        estimated_zip_bytes = size_bytes * 0.20
+        estimated_zip_mb = estimated_zip_bytes / (1024 * 1024)
+        
+        # SendGrid limit is 30MB
+        can_email = estimated_zip_mb < 30
+        warning = None
+        
+        if estimated_zip_mb > 30:
+            warning = "Backup too large for email (SendGrid limit: 30MB)"
+        elif estimated_zip_mb > 25:
+            warning = "Backup approaching SendGrid's 30MB limit"
+        
+        def format_file_size(bytes_size):
+            """Format bytes to human readable size"""
+            if bytes_size < 1024:
+                return f"{bytes_size} B"
+            elif bytes_size < 1024 * 1024:
+                return f"{bytes_size / 1024:.1f} KB"
+            elif bytes_size < 1024 * 1024 * 1024:
+                return f"{bytes_size / (1024 * 1024):.1f} MB"
+            else:
+                return f"{bytes_size / (1024 * 1024 * 1024):.2f} GB"
+        
+        return jsonify({
+            "size_mb": round(size_bytes / (1024 * 1024), 2),
+            "size_readable": format_file_size(size_bytes),
+            "estimated_zip_mb": round(estimated_zip_mb, 2),
+            "estimated_zip_readable": format_file_size(estimated_zip_bytes),
+            "filename": os.path.basename(db_path),
+            "can_email": can_email,
+            "warning": warning
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting database info: {e}")
+        return jsonify({'error': 'Failed to get database information'}), 500
+
+@app.route('/api/backup-database', methods=['POST'])
+@login_required
+def backup_database():
+    """Create a database backup and email it"""
+    try:
+        # Extract database path from URI
+        db_uri = app.config['SQLALCHEMY_DATABASE_URI']
+        if db_uri.startswith('sqlite:///'):
+            db_path = db_uri.replace('sqlite:///', '')
+            # Handle relative paths
+            if not os.path.isabs(db_path):
+                db_path = os.path.join(app.root_path, db_path)
+        else:
+            return jsonify({'error': 'Only SQLite databases are supported for backup'}), 400
+        
+        if not os.path.exists(db_path):
+            return jsonify({'error': 'Database file not found'}), 404
+        
+        # Create timestamp for filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        zip_filename = f"gymmolly_backup_{timestamp}.zip"
+        
+        # Create zip file in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            zipf.write(db_path, os.path.basename(db_path))
+        
+        # Get the zip data
+        zip_data = zip_buffer.getvalue()
+        zip_size_mb = len(zip_data) / (1024 * 1024)
+        
+        # Check if zip file is too large for SendGrid
+        if zip_size_mb > 30:
+            return jsonify({
+                'error': f'Backup file too large ({zip_size_mb:.1f} MB). SendGrid limit is 30MB.'
+            }), 400
+        
+        # Format file sizes for email
+        original_size = os.path.getsize(db_path)
+        def format_file_size(bytes_size):
+            if bytes_size < 1024 * 1024:
+                return f"{bytes_size / 1024:.1f} KB"
+            else:
+                return f"{bytes_size / (1024 * 1024):.1f} MB"
+        
+        # Calculate compression ratio
+        compression_ratio = round((1 - len(zip_data) / original_size) * 100, 1)
+        
+        # Prepare email content
+        email_body = f"""
+        <h3>GymMolly Database Backup</h3>
+        <p>Database backup created on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+        
+        <table style="border-collapse: collapse; margin: 20px 0;">
+            <tr>
+                <td style="padding: 5px;"><strong>Original size:</strong></td>
+                <td style="padding: 5px;">{format_file_size(original_size)}</td>
+            </tr>
+            <tr>
+                <td style="padding: 5px;"><strong>Compressed size:</strong></td>
+                <td style="padding: 5px;">{format_file_size(len(zip_data))}</td>
+            </tr>
+            <tr>
+                <td style="padding: 5px;"><strong>Compression ratio:</strong></td>
+                <td style="padding: 5px;">{compression_ratio}% reduction</td>
+            </tr>
+        </table>
+        
+        <p>This backup is within SendGrid's 30MB attachment limit.</p>
+        <p><em>This is an automated backup from the GymMolly system.</em></p>
+        """
+        
+        # Send email using SendGrid
+        from sendgrid import SendGridAPIClient
+        from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
+        
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        
+        message = Mail(
+            from_email=SENDER_EMAIL,
+            to_emails='greg@bodynutrition.com',
+            subject=f'GymMolly Database Backup - {timestamp}',
+            html_content=email_body
+        )
+        
+        # Add attachment
+        encoded_file = base64.b64encode(zip_data).decode()
+        attachment = Attachment(
+            file_content=FileContent(encoded_file),
+            file_name=FileName(zip_filename),
+            file_type=FileType('application/zip'),
+            disposition=Disposition('attachment')
+        )
+        message.attachment = attachment
+        
+        # Send email
+        response = sg.send(message)
+        
+        if response.status_code in [200, 201, 202]:
+            return jsonify({
+                'message': 'Backup successfully created and sent to greg@bodynutrition.com',
+                'filename': zip_filename,
+                'size': format_file_size(len(zip_data))
+            }), 200
+        else:
+            return jsonify({'error': 'Failed to send backup email'}), 500
+            
+    except Exception as e:
+        print(f"Error creating backup: {e}")
+        return jsonify({'error': f'Failed to create backup: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
