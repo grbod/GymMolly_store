@@ -116,8 +116,8 @@ function DeleteOrders({ onOrderDeleted }) {
       {error && <div className="alert alert-danger">{error}</div>}
 
       <div className="warning-banner">
-        <strong>⚠️ Warning:</strong> This feature is for removing test orders only. 
-        Deleted orders cannot be recovered. Only Processing and Voided orders can be deleted.
+        <strong>⚠️ Warning:</strong> This feature is for removing voided orders only. 
+        Orders must be voided before deletion. Deleted orders cannot be recovered.
       </div>
 
       <div className="filters-section">
@@ -156,7 +156,7 @@ function DeleteOrders({ onOrderDeleted }) {
           </div>
         ) : (
           filteredOrders.map(order => {
-            const canDelete = order.order_status === 'Processing' || order.order_status === 'Voided';
+            const canDelete = order.order_status === 'Voided';
             const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
             
             return (
@@ -191,7 +191,9 @@ function DeleteOrders({ onOrderDeleted }) {
                     </button>
                   ) : (
                     <span className="cannot-delete-message">
-                      {order.order_status === 'Shipped' ? 'Shipped' : 'Locked'}
+                      {order.order_status === 'Processing' ? 'Must void first' : 
+                       order.order_status === 'Shipped' ? 'Cannot modify shipped orders' : 
+                       'Locked'}
                     </span>
                   )}
                 </div>

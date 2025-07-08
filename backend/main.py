@@ -398,6 +398,7 @@ def get_inventory():
     inventory = db.session.query(ItemDetail, InventoryQuantity, ShippingDetail)\
         .join(InventoryQuantity)\
         .outerjoin(ShippingDetail, ItemDetail.sku == ShippingDetail.sku)\
+        .order_by(ItemDetail.product, ItemDetail.flavor, ItemDetail.size)\
         .all()
     result = []
     for item, quantity, shipping in inventory:
@@ -848,10 +849,10 @@ def delete_order(order_id):
         if not order:
             return jsonify({"error": "Order not found"}), 404
         
-        # Only allow deletion of test orders (Processing or Voided status)
-        if order.order_status not in ['Processing', 'Voided']:
+        # Only allow deletion of voided orders
+        if order.order_status != 'Voided':
             return jsonify({
-                "error": f"Cannot delete order in {order.order_status} status. Only Processing or Voided orders can be deleted."
+                "error": f"Cannot delete order in {order.order_status} status. Only voided orders can be deleted."
             }), 400
         
         # Start transaction

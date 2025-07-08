@@ -12,26 +12,52 @@
 }
 
 .address-add-button {
-  background-color: #B2CFEC;
-  color: black;
+  background-color: #28A745;
+  color: white;
   border: none;
 }
 
 .address-add-button:hover {
-  background-color: #9FC0E3;
+  background-color: #218838;
   border: none;
-  color: black;
+  color: white;
 }
 
 /* Next button styling */
 .next-button {
-  background-color: #007bff !important;
-  color: white !important;
-  border-color: #007bff !important;
+  background-color: #B2CFEC !important;
+  color: black !important;
+  border: 1px solid #B2CFEC !important;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 0.25rem;
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  display: inline-block;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
 
 .next-button:hover {
-  background-color: #0056b3 !important;
-  color: white !important;
-  border-color: #0056b3 !important;
+  background-color: #9FC0E3 !important;
+  color: black !important;
+  border-color: #9FC0E3 !important;
+}
+
+/* Zero inventory styling */
+.text-danger-muted {
+  color: #E74C3C !important;
+  font-weight: 500;
+}
+
+.inventory-alert-icon {
+  color: #E74C3C;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.input-disabled-zero {
+  opacity: 0.7;
 }

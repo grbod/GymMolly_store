@@ -1,10 +1,11 @@
 services:
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: https://gymmolly.bodytools.work
     ports:
       - "3001:80"
-    environment:
-      - REACT_APP_API_URL=https://gymmolly.bodytools.work
     restart: unless-stopped
 
   backend:

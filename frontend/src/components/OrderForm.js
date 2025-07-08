@@ -72,14 +72,24 @@ function OrderForm({
                 <div className="mt-2 d-flex gap-2">
                   <button 
                     type="button" 
-                    className="btn btn-sm address-edit-button"
+                    className="btn address-edit-button"
+                    style={{ 
+                      padding: '0.25rem 0.75rem', 
+                      fontSize: '0.75rem',
+                      borderRadius: '20px'
+                    }}
                     onClick={() => navigate(`/edit-address/${formData.address.id}`)}
                   >
                     Edit Address
                   </button>
                   <button 
                     type="button" 
-                    className="btn btn-danger btn-sm"
+                    className="btn btn-danger"
+                    style={{ 
+                      padding: '0.25rem 0.75rem', 
+                      fontSize: '0.75rem',
+                      borderRadius: '20px'
+                    }}
                     onClick={handleDeleteClick}
                   >
                     Delete Address
@@ -90,7 +100,15 @@ function OrderForm({
           )}
 
           <div className="mb-3">
-            <Link to="/add-address" className="btn btn-sm address-add-button">
+            <Link 
+              to="/add-address" 
+              className="btn address-add-button"
+              style={{ 
+                padding: '0.25rem 0.75rem', 
+                fontSize: '0.75rem',
+                borderRadius: '20px'
+              }}
+            >
               <i className="bi bi-plus-circle me-1"></i>Add New Address
             </Link>
           </div>
@@ -125,15 +143,25 @@ function OrderForm({
                     <td>
                       <input
                         type="number"
-                        className="form-control w-auto"
-                        style={{ minWidth: '100px' }}
+                        className={`form-control w-auto ${inventory.find(item => item.sku === product.sku)?.quantity === 0 ? 'input-disabled-zero' : ''}`}
+                        style={{ 
+                          minWidth: '100px',
+                          backgroundColor: inventory.find(item => item.sku === product.sku)?.quantity === 0 ? '#E9ECEF' : '',
+                          cursor: inventory.find(item => item.sku === product.sku)?.quantity === 0 ? 'not-allowed' : 'text'
+                        }}
                         value={product.cases || ''}
                         onChange={(e) => handleCasesChange(product.sku, e.target.value)}
                         min="0"
                         max={inventory.find(item => item.sku === product.sku)?.quantity || 0}
+                        disabled={inventory.find(item => item.sku === product.sku)?.quantity === 0}
                       />
                     </td>
-                    <td>{inventory.find(item => item.sku === product.sku)?.quantity || 0}</td>
+                    <td className={inventory.find(item => item.sku === product.sku)?.quantity === 0 ? 'text-danger-muted' : ''}>
+                      {inventory.find(item => item.sku === product.sku)?.quantity || 0}
+                      {inventory.find(item => item.sku === product.sku)?.quantity === 0 && (
+                        <span className="inventory-alert-icon">⚠️</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -144,6 +172,10 @@ function OrderForm({
             <button 
               type="button" 
               className="btn btn-secondary"
+              style={{ 
+                padding: '0.375rem 0.75rem',
+                fontSize: '1rem'
+              }}
               onClick={() => navigate('/vieworders')}
             >
               View Order History
@@ -151,7 +183,7 @@ function OrderForm({
             
             <button 
               type="submit" 
-              className="btn btn-secondary next-button"
+              className="btn next-button"
             >
               Next <FaArrowRight />
             </button>
