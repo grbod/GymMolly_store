@@ -876,6 +876,75 @@ def delete_order(order_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+# Add order status update endpoint
+@app.route('/api/orders/<int:order_id>/update-status', methods=['PUT'])
+def update_order_status(order_id):
+    """Update order status with password protection"""
+    try:
+        data = request.json
+        new_status = data.get('status')
+        password = data.get('password')
+        
+        # Validate inputs
+        if not new_status:
+            return jsonify({"error": "Status is required"}), 400
+            
+        if new_status not in ['Shipped', 'Manually Cancelled']:
+            return jsonify({"error": "Invalid status. Must be 'Shipped' or 'Manually Cancelled'"}), 400
+            
+        # Format status for display
+        if new_status == 'Manually Cancelled':
+            display_status = 'MANUALLY\nCANCELLED'
+        elif new_status == 'Shipped':
+            # Format shipped date as MM/DD/YY
+            from datetime import datetime
+            today = datetime.now()
+            display_status = f"SHIPPED\n{today.strftime('%m/%d/%y')}"
+        else:
+            display_status = new_status
+            
+        # Verify password
+        if password != 'GREGS':
+            return jsonify({"error": "Invalid password"}), 401
+            
+        # Get order
+        order = db.session.get(Order, order_id)
+        if not order:
+            return jsonify({"error": "Order not found"}), 404
+            
+        # Check current status
+        if order.order_status != 'Processing':
+            return jsonify({
+                "error": f"Cannot update order in {order.order_status} status. Only Processing orders can be updated."
+            }), 400
+            
+        # Handle Manually Cancelled status (replenish inventory like void)
+        if new_status == 'Manually Cancelled':
+            # Start transaction
+            db.session.begin_nested()
+            
+            # Return items to inventory
+            for order_item in OrderItem.query.filter_by(order_id=order_id).all():
+                inventory = db.session.get(InventoryQuantity, order_item.product_sku)
+                if inventory:
+                    inventory.quantity += order_item.quantity
+                else:
+                    db.session.rollback()
+                    return jsonify({
+                        "error": f"Inventory record not found for SKU: {order_item.product_sku}"
+                    }), 400
+        
+        # Update order status
+        order.order_status = display_status
+        db.session.commit()
+        
+        action = "cancelled and inventory replenished" if new_status == 'Manually Cancelled' else "marked as shipped"
+        return jsonify({"message": f"Order {action} successfully"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 # Add shipping webhook endpoint
 @app.route('/api/webhooks/shipping', methods=['POST'])
 def shipping_webhook():
@@ -1030,21 +1099,23 @@ def shipstation_webhook():
                         ship_date_str = fulfillment.get('shipDate')
                         
                         if order_number and ship_date_str:
-                            # Simply split at 'T' and take the first part for YYYY-MM-DD
-                            formatted_ship_date = ship_date_str.split('T')[0]
+                            # Parse the date and format as MM/DD/YY
+                            from datetime import datetime
+                            ship_date = datetime.fromisoformat(ship_date_str.replace('Z', '+00:00'))
+                            formatted_ship_date = ship_date.strftime('%m/%d/%y')
                             
                             # Update the order in the database
                             order = Order.query.filter_by(purchase_order_number=order_number).first()
                             
                             if order:
-                                order.order_status = f"Shipped {formatted_ship_date}"
+                                order.order_status = f"SHIPPED\n{formatted_ship_date}"
                                 db.session.commit()
                                 
-                                logging.info(f"Updated order {order_number} status to: Shipped {formatted_ship_date}")
+                                logging.info(f"Updated order {order_number} status to: SHIPPED {formatted_ship_date}")
                                 return jsonify({
                                     "message": "Order status updated",
                                     "order_number": order_number,
-                                    "new_status": f"Shipped {formatted_ship_date}"
+                                    "new_status": f"SHIPPED\n{formatted_ship_date}"
                                 }), 200
                             else:
                                 logging.warning(f"Order not found: {order_number}")

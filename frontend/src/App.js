@@ -17,6 +17,7 @@ import RemoveProduct from './components/RemoveProduct';
 import DeleteOrders from './components/DeleteOrders';
 import EditProducts from './components/EditProducts';
 import BackupDatabase from './components/BackupDatabase';
+import ManageOrderStatus from './components/ManageOrderStatus';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
@@ -327,6 +328,7 @@ function App() {
         <Route path="/edit-products" element={<EditProducts />} />
         <Route path="/delete-orders" element={<DeleteOrders onOrderDeleted={fetchInventory} />} />
         <Route path="/backup-database" element={<BackupDatabase />} />
+        <Route path="/manage-order-status" element={<ManageOrderStatus onInventoryUpdate={fetchInventory} />} />
         <Route path="/shipping-labels" element={
           <ShippingLabels 
             formData={formData}

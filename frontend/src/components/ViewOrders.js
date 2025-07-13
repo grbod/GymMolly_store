@@ -361,7 +361,7 @@ function ViewOrders({ onInventoryUpdate }) {
                     )}
                   </td>
                   <td>
-                    <span className={`status-badge status-${(order.order_status || 'Processing').toLowerCase()}`}>
+                    <span className={`status-badge status-${(order.order_status || 'Processing').toLowerCase().replace(/\s+/g, '-')}`}>
                       {order.order_status || 'Processing'}
                     </span>
                   </td>

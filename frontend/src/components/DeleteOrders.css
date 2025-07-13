@@ -180,6 +180,32 @@
 .status-shipped {
   background-color: #e8f5e9;
   color: #2e7d32;
+  display: inline-block;
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px 8px;
+  white-space: pre-line;
+}
+
+/* Match any shipped status with date (e.g., status-shipped-2025-07-12) */
+[class*="status-shipped-"] {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  display: inline-block;
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px 8px;
+  white-space: pre-line;
+}
+
+.status-manually-cancelled {
+  background-color: #ffe5e5;
+  color: #d32f2f;
+  display: inline-block;
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px 8px;
+  white-space: pre-line;
 }
 
 .order-date {

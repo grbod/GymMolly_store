@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaBoxes, FaPlus, FaTrash, FaArrowLeft, FaEdit, FaDatabase } from 'react-icons/fa';
+import { FaBoxes, FaPlus, FaTrash, FaArrowLeft, FaEdit, FaDatabase, FaTruck } from 'react-icons/fa';
 import './InventorySettings.css';
 
 function InventorySettings() {
@@ -71,6 +71,15 @@ function InventorySettings() {
           <FaDatabase className="card-icon" style={{ color: '#17a2b8' }} />
           <h3>Backup Database</h3>
           <p>Email database backup to admin</p>
+        </div>
+
+        <div 
+          className="settings-card"
+          onClick={() => navigate('/manage-order-status')}
+        >
+          <FaTruck className="card-icon" style={{ color: '#ff9800' }} />
+          <h3>Manage Order Status</h3>
+          <p>Update order shipping status (admin only)</p>
         </div>
       </div>
     </div>

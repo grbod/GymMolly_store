@@ -164,7 +164,7 @@ function DeleteOrders({ onOrderDeleted }) {
                 <div className="order-header">
                   <div className="order-main-info">
                     <h4>PO# {order.purchase_order_number}</h4>
-                    <span className={`status-badge status-${order.order_status.toLowerCase()}`}>
+                    <span className={`status-badge status-${order.order_status.toLowerCase().replace(/\s+/g, '-')}`}>
                       {order.order_status}
                     </span>
                   </div>
