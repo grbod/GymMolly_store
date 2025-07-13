@@ -44,6 +44,10 @@ function DeleteOrders({ onOrderDeleted }) {
   };
 
   const handleDeleteOrder = async (orderId, poNumber) => {
+    // First, find the order to check its status
+    const order = orders.find(o => o.order_id === orderId);
+    const isShipped = order && (order.order_status === 'Shipped' || order.order_status.startsWith('SHIPPED'));
+    
     // First password prompt
     const password = prompt("Please enter the admin password to DELETE this order:");
     
@@ -55,8 +59,15 @@ function DeleteOrders({ onOrderDeleted }) {
       return;
     }
     
-    // If password is correct, show serious confirmation dialog
-    if (!window.confirm(`⚠️ WARNING: This will PERMANENTLY DELETE order ${poNumber}!\n\nThis action cannot be undone.\n\nAre you absolutely sure you want to delete this order?`)) {
+    // Different confirmation messages for shipped vs voided orders
+    let confirmMessage;
+    if (isShipped) {
+      confirmMessage = `⚠️ CRITICAL WARNING: This will PERMANENTLY DELETE shipped order ${poNumber}!\n\n🔄 INVENTORY HAS BEEN RE-ADDED TO INVENTORY\n\nThis action cannot be undone.\nAll inventory for this order will be restored to stock.\n\nAre you absolutely sure you want to delete this SHIPPED order?`;
+    } else {
+      confirmMessage = `⚠️ WARNING: This will PERMANENTLY DELETE order ${poNumber}!\n\nThis action cannot be undone.\n\nAre you absolutely sure you want to delete this order?`;
+    }
+    
+    if (!window.confirm(confirmMessage)) {
       return;
     }
     
@@ -74,6 +85,8 @@ function DeleteOrders({ onOrderDeleted }) {
         throw new Error(data.error || 'Failed to delete order');
       }
       
+      const data = await response.json();
+      
       // Remove order from state
       setOrders(orders.filter(o => o.order_id !== orderId));
       
@@ -82,8 +95,12 @@ function DeleteOrders({ onOrderDeleted }) {
         onOrderDeleted();
       }
       
-      // Show success message
-      alert(`Order ${poNumber} has been permanently deleted.`);
+      // Show success message with inventory restoration info
+      let successMessage = `Order ${poNumber} has been permanently deleted.`;
+      if (data.inventory_restored) {
+        successMessage += `\n\n✅ INVENTORY HAS BEEN RESTORED TO STOCK`;
+      }
+      alert(successMessage);
       
     } catch (error) {
       console.error('Error deleting order:', error);
@@ -156,7 +173,7 @@ function DeleteOrders({ onOrderDeleted }) {
           </div>
         ) : (
           filteredOrders.map(order => {
-            const canDelete = order.order_status === 'Voided';
+            const canDelete = order.order_status === 'Voided' || order.order_status === 'Shipped' || order.order_status.startsWith('SHIPPED');
             const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
             
             return (
@@ -191,9 +208,7 @@ function DeleteOrders({ onOrderDeleted }) {
                     </button>
                   ) : (
                     <span className="cannot-delete-message">
-                      {order.order_status === 'Processing' ? 'Must void first' : 
-                       order.order_status === 'Shipped' ? 'Cannot modify shipped orders' : 
-                       'Locked'}
+                      {order.order_status === 'Processing' ? 'Must void first' : 'Locked'}
                     </span>
                   )}
                 </div>

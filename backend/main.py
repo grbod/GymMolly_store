@@ -222,7 +222,7 @@ def init_database():
             db.create_all()
             
             # Create indexes for better performance
-            from sqlalchemy import text
+            from sqlalchemy import text, func
             with db.engine.connect() as conn:
                 indexes = [
                     # Foreign key indexes
@@ -849,16 +849,29 @@ def delete_order(order_id):
         if not order:
             return jsonify({"error": "Order not found"}), 404
         
-        # Only allow deletion of voided orders
-        if order.order_status != 'Voided':
+        # Allow deletion of voided and shipped orders
+        if order.order_status not in ['Voided', 'Shipped'] and not order.order_status.startswith('SHIPPED'):
             return jsonify({
-                "error": f"Cannot delete order in {order.order_status} status. Only voided orders can be deleted."
+                "error": f"Cannot delete order in {order.order_status} status. Only voided or shipped orders can be deleted."
             }), 400
         
         # Start transaction
         db.session.begin_nested()
         
         try:
+            # For shipped orders, restore inventory (voided orders already had inventory restored)
+            if order.order_status == 'Shipped' or order.order_status.startswith('SHIPPED'):
+                for order_item in OrderItem.query.filter_by(order_id=order_id).all():
+                    inventory = db.session.get(InventoryQuantity, order_item.product_sku)
+                    if inventory:
+                        inventory.quantity += order_item.quantity
+                        logging.info(f"Restored {order_item.quantity} units of {order_item.product_sku} to inventory")
+                    else:
+                        db.session.rollback()
+                        return jsonify({
+                            "error": f"Cannot delete order: Inventory record not found for SKU: {order_item.product_sku}"
+                        }), 400
+            
             # Delete order items first (foreign key constraint)
             OrderItem.query.filter_by(order_id=order_id).delete()
             
@@ -866,7 +879,13 @@ def delete_order(order_id):
             db.session.delete(order)
             db.session.commit()
             
-            return jsonify({"message": f"Order {order.purchase_order_number} deleted successfully"}), 200
+            # Determine if inventory was restored
+            inventory_restored = order.order_status == 'Shipped' or order.order_status.startswith('SHIPPED')
+            
+            return jsonify({
+                "message": f"Order {order.purchase_order_number} deleted successfully",
+                "inventory_restored": inventory_restored
+            }), 200
             
         except Exception as e:
             db.session.rollback()
@@ -1058,11 +1077,19 @@ def bulk_update_products():
 @app.route('/api/webhooks/shipstation', methods=['POST'])
 def shipstation_webhook():
     print("\n=== WEBHOOK ENDPOINT HIT ===")
-    logging.info("Webhook received")
+    logging.info("=== ShipStation Webhook Received ===")
+    
+    # Log all request details
+    logging.info(f"Request method: {request.method}")
+    logging.info(f"Request URL: {request.url}")
+    logging.info(f"Request headers: {dict(request.headers)}")
+    logging.info(f"Request content type: {request.content_type}")
+    logging.info(f"Raw request data: {request.get_data()}")
     
     try:
         data = request.get_json()
-        logging.info(f"Initial webhook data: {data}")
+        logging.info(f"Parsed JSON webhook data: {data}")
+        logging.info(f"Resource type: {data.get('resource_type')}")
         
         if data.get('resource_type') == 'FULFILLMENT_SHIPPED':
             resource_url = data.get('resource_url')
@@ -1098,48 +1125,126 @@ def shipstation_webhook():
                         order_number = fulfillment.get('orderNumber')
                         ship_date_str = fulfillment.get('shipDate')
                         
+                        logging.info(f"Extracted from fulfillment - Order number: '{order_number}', Ship date: '{ship_date_str}'")
+                        logging.info(f"Order number type: {type(order_number)}, length: {len(str(order_number)) if order_number else 0}")
+                        
                         if order_number and ship_date_str:
                             # Parse the date and format as MM/DD/YY
                             from datetime import datetime
-                            ship_date = datetime.fromisoformat(ship_date_str.replace('Z', '+00:00'))
+                            import re
+                            
+                            # Fix ShipStation's 7-digit microseconds to 6-digit max for Python
+                            # ShipStation sends: '2025-07-12T00:00:00.0000000'
+                            # Python needs: '2025-07-12T00:00:00.000000'
+                            ship_date_fixed = re.sub(r'\.(\d{6})\d+', r'.\1', ship_date_str)
+                            logging.info(f"Original ship_date: {ship_date_str}")
+                            logging.info(f"Fixed ship_date: {ship_date_fixed}")
+                            
+                            ship_date = datetime.fromisoformat(ship_date_fixed.replace('Z', '+00:00'))
                             formatted_ship_date = ship_date.strftime('%m/%d/%y')
+                            logging.info(f"Formatted ship date: {formatted_ship_date}")
+                            
+                            # Log database query details
+                            logging.info(f"Searching for order with purchase_order_number: '{order_number}'")
+                            
+                            # Check all orders to see what's in the database
+                            all_orders = Order.query.all()
+                            logging.info(f"Total orders in database: {len(all_orders)}")
+                            if all_orders:
+                                logging.info("First 5 order PO numbers in database:")
+                                for i, ord in enumerate(all_orders[:5]):
+                                    logging.info(f"  {i+1}. PO: '{ord.purchase_order_number}' (type: {type(ord.purchase_order_number)})")
                             
                             # Update the order in the database
                             order = Order.query.filter_by(purchase_order_number=order_number).first()
+                            logging.info(f"Database query result: {order is not None}")
                             
                             if order:
-                                order.order_status = f"SHIPPED\n{formatted_ship_date}"
-                                db.session.commit()
+                                # Log order details before update
+                                logging.info(f"Order found! ID: {order.order_id}")
+                                logging.info(f"Current order status BEFORE update: '{order.order_status}'")
+                                logging.info(f"Order PO number in DB: '{order.purchase_order_number}'")
                                 
-                                logging.info(f"Updated order {order_number} status to: SHIPPED {formatted_ship_date}")
-                                return jsonify({
-                                    "message": "Order status updated",
-                                    "order_number": order_number,
-                                    "new_status": f"SHIPPED\n{formatted_ship_date}"
-                                }), 200
+                                # Update status
+                                old_status = order.order_status
+                                new_status = f"SHIPPED\n{formatted_ship_date}"
+                                order.order_status = new_status
+                                
+                                logging.info(f"Status change: '{old_status}' -> '{new_status}'")
+                                
+                                # Commit to database
+                                try:
+                                    db.session.commit()
+                                    logging.info("Database commit successful!")
+                                    
+                                    # Verify the update
+                                    updated_order = Order.query.filter_by(purchase_order_number=order_number).first()
+                                    logging.info(f"Status AFTER commit: '{updated_order.order_status}'")
+                                    
+                                    logging.info(f"✅ Successfully updated order {order_number} status to: {new_status}")
+                                    return jsonify({
+                                        "message": "Order status updated",
+                                        "order_number": order_number,
+                                        "old_status": old_status,
+                                        "new_status": new_status
+                                    }), 200
+                                    
+                                except Exception as commit_error:
+                                    logging.error(f"❌ Database commit failed: {str(commit_error)}")
+                                    db.session.rollback()
+                                    return jsonify({"error": f"Failed to commit status update: {str(commit_error)}"}), 500
+                                    
                             else:
-                                logging.warning(f"Order not found: {order_number}")
+                                logging.warning(f"❌ Order not found in database: '{order_number}'")
+                                # Try alternative search methods
+                                logging.info("Trying case-insensitive search...")
+                                order_case_insensitive = Order.query.filter(func.lower(Order.purchase_order_number) == func.lower(order_number)).first()
+                                if order_case_insensitive:
+                                    logging.info(f"Found order with case-insensitive search: {order_case_insensitive.purchase_order_number}")
+                                else:
+                                    logging.info("No order found even with case-insensitive search")
+                                
                                 return jsonify({"error": f"Order {order_number} not found"}), 404
                         else:
-                            logging.error("Missing order number or ship date in fulfillment data")
+                            logging.error(f"❌ Missing order number or ship date in fulfillment data")
+                            logging.error(f"Fulfillment data: {fulfillment}")
                             return jsonify({"error": "Missing required fulfillment data"}), 400
                     else:
-                        logging.error("No fulfillments found in response")
+                        logging.error(f"❌ No fulfillments found in response")
+                        logging.error(f"Full fulfillment response: {fulfillment_data}")
                         return jsonify({"error": "No fulfillments found"}), 400
                 else:
-                    logging.error(f"Error response: {response.text}")
+                    logging.error(f"❌ ShipStation API error response: {response.status_code}")
+                    logging.error(f"Response text: {response.text}")
+                    logging.error(f"Response headers: {response.headers}")
                     return jsonify({"error": "Failed to fetch fulfillment details"}), response.status_code
                     
-            except requests.exceptions.RequestException as e:
-                error_msg = f"API request failed: {str(e)}"
+            except requests.exceptions.Timeout as e:
+                error_msg = f"❌ ShipStation API timeout: {str(e)}"
                 logging.error(error_msg)
                 return jsonify({"error": error_msg}), 500
+            except requests.exceptions.ConnectionError as e:
+                error_msg = f"❌ ShipStation API connection error: {str(e)}"
+                logging.error(error_msg)
+                return jsonify({"error": error_msg}), 500
+            except requests.exceptions.RequestException as e:
+                error_msg = f"❌ ShipStation API request failed: {str(e)}"
+                logging.error(error_msg)
+                return jsonify({"error": error_msg}), 500
+        else:
+            logging.info(f"ℹ️  Ignoring webhook - resource type is '{data.get('resource_type')}', not 'FULFILLMENT_SHIPPED'")
                 
         return jsonify({"message": "Webhook processed"}), 200
         
-    except Exception as e:
-        error_msg = f"Error processing webhook: {str(e)}"
+    except json.JSONDecodeError as e:
+        error_msg = f"❌ Invalid JSON in webhook payload: {str(e)}"
         logging.error(error_msg)
+        logging.error(f"Raw request data: {request.get_data()}")
+        return jsonify({"error": error_msg}), 400
+    except Exception as e:
+        error_msg = f"❌ Unexpected error processing webhook: {str(e)}"
+        logging.error(error_msg)
+        logging.error(f"Exception type: {type(e).__name__}")
         traceback.print_exc()
         return jsonify({"error": error_msg}), 500
 
