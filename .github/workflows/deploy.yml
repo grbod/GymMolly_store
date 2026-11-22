@@ -4,70 +4,50 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch:
+
+concurrency:
+  group: production
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  test-backend:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-    - name: Deploy to server
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        port: ${{ secrets.SERVER_PORT }}
-        script: |
-          # Navigate to project directory
-          cd /opt/gymmolly
-          
-          # Pull latest changes
-          git pull origin main
-          
-          # /opt/gymmolly/.env is server-owned and persists across deploys; do not overwrite it
-          
-          # Build and restart containers
-          docker-compose -f docker-compose.prod.yml down
-          docker-compose -f docker-compose.prod.yml up -d --build
-          
-          # Wait for containers to be healthy
-          sleep 10
-          
-          # Check if containers are running
-          docker-compose -f docker-compose.prod.yml ps
-          
-          # Show recent logs
-          docker-compose -f docker-compose.prod.yml logs --tail=50
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
 
-    - name: Health check
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        port: ${{ secrets.SERVER_PORT }}
-        script: |
-          # Check if frontend is responding
-          curl -f http://localhost:3001 || exit 1
-          
-          # Check if backend API is responding
-          curl -f http://localhost:5001/api/inventory || exit 1
-          
-          echo "Health checks passed!"
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
 
-    - name: Notify deployment status
-      if: always()
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        text: |
-          Deployment ${{ job.status }}!
-          Commit: ${{ github.sha }}
-          Author: ${{ github.actor }}
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-      continue-on-error: true
+      - name: Run tests
+        working-directory: ./backend
+        run: python -m pytest tests/ -q
+
+  deploy:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    steps:
+      # The key can only run /usr/local/sbin/gymmolly-ci-deploy on the server (see deploy/gymmolly-ci-deploy.sh).
+      # That script pulls this commit, rebuilds, health-checks and rolls back on failure.
+      - name: Deploy (key can only run the GymMolly deploy script)
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "root@${DEPLOY_HOST}" "${GITHUB_SHA}"
