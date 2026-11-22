@@ -95,7 +95,7 @@ function BackupDatabase() {
     
     if (!dbInfo.can_email) {
       return <FaTimes className="size-icon error" />;
-    } else if (dbInfo.warning && dbInfo.estimated_zip_mb > 25) {
+    } else if (dbInfo.warning && dbInfo.estimated_zip_mb > 15) {
       return <FaExclamationTriangle className="size-icon warning" />;
     } else {
       return <FaCheck className="size-icon success" />;
@@ -107,7 +107,7 @@ function BackupDatabase() {
     
     if (!dbInfo.can_email) {
       return 'error';
-    } else if (dbInfo.warning && dbInfo.estimated_zip_mb > 25) {
+    } else if (dbInfo.warning && dbInfo.estimated_zip_mb > 15) {
       return 'warning';
     } else {
       return 'success';
@@ -154,7 +154,7 @@ function BackupDatabase() {
               </div>
               
               <div className={`info-item status-item ${getSizeClass()}`}>
-                <span className="info-label">SendGrid limit (30MB):</span>
+                <span className="info-label">Email limit (18MB):</span>
                 <span className="info-value">
                   {getSizeIcon()}
                   {dbInfo.warning || 'Within limit'}

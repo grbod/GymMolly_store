@@ -25,10 +25,10 @@ rm -rf deploy_package/
 mkdir -p deploy_package
 
 # Copy necessary files
-cp -r backend/ deploy_package/
-cp -r frontend/ deploy_package/
+rsync -a --exclude=".env" --exclude=".env.*" --exclude="venv/" --exclude="__pycache__/" backend/ deploy_package/backend/
+rsync -a --exclude=".env" --exclude=".env.*" --exclude="node_modules/" frontend/ deploy_package/frontend/
 cp docker-compose.production.yml deploy_package/docker-compose.yml
-cp .env.production deploy_package/.env
+# .env is server-owned at /opt/gymmolly/.env and is never packaged or synced
 cp -r nginx-vps-config/ deploy_package/
 
 # Create necessary directories
@@ -40,7 +40,7 @@ echo -e "${GREEN}Deployment package created${NC}"
 # Step 2: Transfer files to VPS
 echo -e "${YELLOW}Step 2: Transferring files to VPS...${NC}"
 ssh ${VPS_USER}@${VPS_IP} "mkdir -p ${REMOTE_DIR}"
-rsync -avz --progress deploy_package/ ${VPS_USER}@${VPS_IP}:${REMOTE_DIR}/
+rsync -avz --progress --exclude=".env" --exclude=".env.*" deploy_package/ ${VPS_USER}@${VPS_IP}:${REMOTE_DIR}/
 
 echo -e "${GREEN}Files transferred successfully${NC}"
 

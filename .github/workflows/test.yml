@@ -72,8 +72,8 @@ jobs:
     - name: Run tests
       working-directory: ./backend
       run: |
-        # Run tests if they exist, otherwise just check imports
-        python -m pytest tests/ -v --cov=. --cov-report=term-missing || python -c "import main; print('Import test passed')"
+        # Fail the job if any test fails
+        python -m pytest tests/ -v --cov=. --cov-report=term-missing
 
   docker-build:
     runs-on: ubuntu-latest

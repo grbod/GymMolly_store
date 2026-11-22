@@ -27,18 +27,9 @@ load_dotenv(env_path)
 SS_CLIENT_ID = os.getenv('SS_CLIENT_ID')
 SS_CLIENT_SECRET = os.getenv('SS_CLIENT_SECRET')
 SS_STORE_ID = os.getenv('SS_STORE_ID')
-SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
 SENDER_EMAIL = os.getenv('SENDER_EMAIL')
 RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL')
 
-# Verify credentials are loaded
-print("\nEnvironment Variables Check:")
-print(f"SS_CLIENT_ID: {'Found' if SS_CLIENT_ID else 'Missing'}")
-print(f"SS_CLIENT_SECRET: {'Found' if SS_CLIENT_SECRET else 'Missing'}")
-print(f"SS_STORE_ID: {'Found' if SS_STORE_ID else 'Missing'}")
-print(f"SENDGRID_API_KEY: {'Found' if SENDGRID_API_KEY else 'Missing'}")
-print(f"SENDER_EMAIL: {'Found' if SENDER_EMAIL else 'Missing'}")
-print(f"RECIPIENT_EMAIL: {'Found' if RECIPIENT_EMAIL else 'Missing'}")
 
 # Set up logging
 logging.basicConfig(
@@ -49,7 +40,10 @@ logging.basicConfig(
 # Import Flask extensions and modules
 from flask_cors import CORS
 from flask_session import Session
-from sendemail import send_order_confirmation_email
+from sendemail import (
+    send_order_confirmation_email, send_email, budget_attachments,
+    MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_MIB,
+)
 from config import app, db
 from shipstationcreate import create_shipstation_order
 from shipping_label_creator import process_files
@@ -678,7 +672,17 @@ def create_order():
             db
         )
 
-        return jsonify({"message": "Order created successfully"}), 201
+        response = {"message": "Order created successfully"}
+        _, omitted = budget_attachments([
+            ('pdf', 'application/pdf', pdf_data),
+            ('zip', 'application/zip', zip_data),
+        ])
+        if omitted:
+            response["email_attachments_omitted"] = omitted
+            response["email_attachments_note"] = (
+                f"Label attachments were not emailed: combined size exceeds {MAX_ATTACHMENT_MIB}MB"
+            )
+        return jsonify(response), 201
 
     except Exception as e:
         db.session.rollback()
@@ -1275,14 +1279,15 @@ def get_database_info():
         estimated_zip_bytes = size_bytes * 0.20
         estimated_zip_mb = estimated_zip_bytes / (1024 * 1024)
         
-        # SendGrid limit is 30MB
-        can_email = estimated_zip_mb < 30
+        # Whole-message budget: raw attachment bytes must be at or under MAX_ATTACHMENT_MIB
+        # (Cloudflare caps the full message at 25 MiB including base64 encoding).
+        can_email = estimated_zip_bytes <= MAX_ATTACHMENT_BYTES
         warning = None
         
-        if estimated_zip_mb > 30:
-            warning = "Backup too large for email (SendGrid limit: 30MB)"
-        elif estimated_zip_mb > 25:
-            warning = "Backup approaching SendGrid's 30MB limit"
+        if estimated_zip_bytes > MAX_ATTACHMENT_BYTES:
+            warning = f"Backup too large for email (limit: {MAX_ATTACHMENT_MIB}MB)"
+        elif estimated_zip_bytes > MAX_ATTACHMENT_BYTES * 0.85:
+            warning = f"Backup approaching the {MAX_ATTACHMENT_MIB}MB email limit"
         
         def format_file_size(bytes_size):
             """Format bytes to human readable size"""
@@ -1340,10 +1345,10 @@ def backup_database():
         zip_data = zip_buffer.getvalue()
         zip_size_mb = len(zip_data) / (1024 * 1024)
         
-        # Check if zip file is too large for SendGrid
-        if zip_size_mb > 30:
+        # Check against the whole-message attachment budget
+        if len(zip_data) > MAX_ATTACHMENT_BYTES:
             return jsonify({
-                'error': f'Backup file too large ({zip_size_mb:.1f} MB). SendGrid limit is 30MB.'
+                'error': f'Backup file too large ({zip_size_mb:.1f} MB). Email limit is {MAX_ATTACHMENT_MIB}MB.'
             }), 400
         
         # Format file sizes for email
@@ -1377,37 +1382,19 @@ def backup_database():
             </tr>
         </table>
         
-        <p>This backup is within SendGrid's 30MB attachment limit.</p>
+        <p>This backup is within the {MAX_ATTACHMENT_MIB}MB attachment limit.</p>
         <p><em>This is an automated backup from the GymMolly system.</em></p>
         """
         
-        # Send email using SendGrid
-        from sendgrid import SendGridAPIClient
-        from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
-        
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
-        
-        message = Mail(
-            from_email=SENDER_EMAIL,
-            to_emails='greg@bodynutrition.com',
-            subject=f'GymMolly Database Backup - {timestamp}',
-            html_content=email_body
+        # Send email through the shared helper (Cloudflare, or SendGrid rollback)
+        sent = send_email(
+            ['greg@bodynutrition.com'],
+            f'GymMolly Database Backup - {timestamp}',
+            email_body,
+            [(zip_filename, 'application/zip', zip_data)],
         )
         
-        # Add attachment
-        encoded_file = base64.b64encode(zip_data).decode()
-        attachment = Attachment(
-            file_content=FileContent(encoded_file),
-            file_name=FileName(zip_filename),
-            file_type=FileType('application/zip'),
-            disposition=Disposition('attachment')
-        )
-        message.attachment = attachment
-        
-        # Send email
-        response = sg.send(message)
-        
-        if response.status_code in [200, 201, 202]:
+        if sent:
             return jsonify({
                 'message': 'Backup successfully created and sent to greg@bodynutrition.com',
                 'filename': zip_filename,

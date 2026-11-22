@@ -1,0 +1,8 @@
+# Never bake secrets into the image. Env comes from the server at runtime.
+.env
+.env.*
+**/.env
+**/.env.*
+venv/
+__pycache__/
+*.pyc

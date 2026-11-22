@@ -28,8 +28,7 @@ jobs:
           # Pull latest changes
           git pull origin main
           
-          # Copy production environment file
-          cp backend/.env.production .env
+          # /opt/gymmolly/.env is server-owned and persists across deploys; do not overwrite it
           
           # Build and restart containers
           docker-compose -f docker-compose.prod.yml down
